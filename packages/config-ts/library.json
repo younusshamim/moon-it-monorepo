@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Library (compiled)",
+  "extends": "./base.json",
+  "_comment": "For internal packages that emit to dist and are versioned/published via Changesets. Build with `tsc -b`; point package.json exports at ./dist. The current stubs are consumed as source (exports -> ./src) and extend base.json for `tsc --noEmit` typechecking; switch a package here when it needs real build output.",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  }
+}

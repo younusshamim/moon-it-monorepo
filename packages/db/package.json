@@ -1,5 +1,5 @@
 {
-  "name": "@moonit/ui",
+  "name": "@moonit/db",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,8 @@
     "test": "echo \"no tests yet\" && exit 0"
   },
   "dependencies": {
-    "@moonit/core": "workspace:*"
+    "@moonit/core": "workspace:*",
+    "@moonit/schema": "workspace:*"
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",

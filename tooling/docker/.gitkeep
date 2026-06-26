@@ -1,0 +1,2 @@
+# docker-compose, Dockerfiles, and Postgres/Redis init scripts live here.
+# Not a workspace package — nothing imports it at runtime. See INFRASTRUCTURE.md §2, §5.

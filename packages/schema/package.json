@@ -1,5 +1,5 @@
 {
-  "name": "@moonit/ui",
+  "name": "@moonit/schema",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,9 +10,6 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "test": "echo \"no tests yet\" && exit 0"
-  },
-  "dependencies": {
-    "@moonit/core": "workspace:*"
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",

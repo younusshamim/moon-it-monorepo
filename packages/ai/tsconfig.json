@@ -1,5 +1,5 @@
 {
-  "extends": "@moonit/config-ts/react-library.json",
+  "extends": "@moonit/config-ts/base.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist"

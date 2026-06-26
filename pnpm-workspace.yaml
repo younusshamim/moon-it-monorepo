@@ -1,3 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# tooling/* is intentionally NOT a workspace — it holds infra glue
+# (docker, scripts) that nothing imports at runtime. See INFRASTRUCTURE.md §2.
