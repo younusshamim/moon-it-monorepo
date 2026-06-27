@@ -1,0 +1,14 @@
+// Drizzle table barrel — consumed by the client (`drizzle({ schema })`) and drizzle-kit.
+
+export * from "./affiliation.js";
+export * from "./assessment.js";
+export * from "./catalog.js";
+export * from "./crm.js";
+export * from "./enrollment.js";
+export * from "./finance.js";
+export * from "./hr.js";
+export * from "./iam.js";
+export * from "./organization.js";
+export * from "./people.js";
+export * from "./platform.js";
+export * from "./scheduling.js";

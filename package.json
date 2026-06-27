@@ -23,6 +23,11 @@
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
     ]
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
     "@changesets/cli": "^2.31.0",

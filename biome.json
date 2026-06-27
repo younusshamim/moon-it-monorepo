@@ -39,7 +39,7 @@
   },
   "overrides": [
     {
-      "includes": ["**/env.ts", "**/env.*.ts", "**/config/env.ts"],
+      "includes": ["**/env.ts", "**/env.*.ts", "**/config/env.ts", "**/drizzle.config.ts"],
       "linter": {
         "rules": {
           "style": {

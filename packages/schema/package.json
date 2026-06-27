@@ -11,6 +11,9 @@
     "lint": "biome check .",
     "test": "echo \"no tests yet\" && exit 0"
   },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",
     "typescript": "5.9.2"
