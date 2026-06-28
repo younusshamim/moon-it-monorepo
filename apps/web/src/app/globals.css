@@ -1,0 +1,10 @@
+/*
+ * App stylesheet. Pulls in the entire @moonit/ui design system (tokens + component styles) in one
+ * line, then wires the Next font into Tailwind's `font-sans` (INFRASTRUCTURE.md §5). Theme edits live
+ * in @moonit/ui/globals.css so they retheme every app at once — keep app-level CSS to a minimum.
+ */
+@import "@moonit/ui/globals.css";
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}

@@ -60,6 +60,17 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/ui/src/components/**"],
+      "linter": {
+        "enabled": false
+      }
     }
-  ]
+  ],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  }
 }

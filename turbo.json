@@ -17,7 +17,10 @@
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "PORT",
         "HOST",
-        "LOG_LEVEL"
+        "LOG_LEVEL",
+        "API_URL",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_APP_URL"
       ]
     },
     "dev": {
@@ -45,7 +48,10 @@
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "PORT",
         "HOST",
-        "LOG_LEVEL"
+        "LOG_LEVEL",
+        "API_URL",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_APP_URL"
       ]
     },
     "db:dbml": {

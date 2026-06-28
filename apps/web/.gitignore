@@ -1,0 +1,14 @@
+# Next.js
+/.next/
+/out/
+
+# Production build
+/build
+
+# Env (secrets stay out of the repo — INFRASTRUCTURE.md §5)
+.env
+.env*.local
+
+# Generated
+next-env.d.ts
+*.tsbuildinfo
