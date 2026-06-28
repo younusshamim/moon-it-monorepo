@@ -27,6 +27,10 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
       "env": []
+    },
+    "db:dbml": {
+      "inputs": ["src/schema/**"],
+      "outputs": ["schema.dbml"]
     }
   }
 }

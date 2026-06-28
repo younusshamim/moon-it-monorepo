@@ -1,0 +1,964 @@
+enum attendance_status {
+  present
+  absent
+  late
+  excused
+}
+
+enum batch_status {
+  planned
+  open_for_enrollment
+  running
+  completed
+  cancelled
+}
+
+enum certificate_source {
+  institute
+  government
+}
+
+enum delivery_mode {
+  onsite
+  online
+  hybrid
+}
+
+enum discount_type {
+  percentage
+  fixed
+}
+
+enum employee_status {
+  active
+  on_leave
+  terminated
+}
+
+enum enrollment_status {
+  applied
+  confirmed
+  active
+  completed
+  dropped
+  transferred
+}
+
+enum exam_type {
+  quiz
+  midterm
+  final
+  practical
+  assignment
+}
+
+enum gender {
+  male
+  female
+  other
+}
+
+enum govt_reg_status {
+  pending_payment
+  registered
+  admit_issued
+  appeared
+  passed
+  failed
+  absent
+  cancelled
+}
+
+enum invoice_purpose {
+  course_fee
+  govt_exam_fee
+}
+
+enum invoice_status {
+  draft
+  issued
+  partially_paid
+  paid
+  void
+}
+
+enum lead_source {
+  walk_in
+  facebook
+  google
+  referral
+  phone
+  website
+}
+
+enum lead_status {
+  new
+  contacted
+  interested
+  enrolled
+  lost
+}
+
+enum payment_method {
+  cash
+  bkash
+  nagad
+  rocket
+  card
+  bank_transfer
+}
+
+enum payment_status {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum program_type {
+  short_course
+  language
+  diploma
+}
+
+enum user_status {
+  active
+  suspended
+  invited
+}
+
+table affiliation_bodies {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  code varchar(24) [not null, unique]
+  name varchar(200) [not null]
+  website varchar(240)
+  isActive boolean [not null, default: true]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    createdAt
+  }
+}
+
+table attendance {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  sessionId uuid [not null]
+  enrollmentId uuid [not null]
+  status attendance_status [not null, default: 'present']
+  markedAt "timestamp with time zone" [not null, default: `now()`]
+  markedBy uuid
+
+  indexes {
+    (sessionId, enrollmentId) [name: 'attendance_sessionId_enrollmentId_unique', unique]
+    sessionId
+    enrollmentId
+  }
+}
+
+table audit_logs {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  actorUserId uuid
+  branchId uuid
+  action varchar(80) [not null]
+  entityType varchar(60) [not null]
+  entityId uuid
+  before jsonb
+  after jsonb
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    actorUserId
+    branchId
+    entityType
+    createdAt
+  }
+}
+
+table batch_instructors {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  batchId uuid [not null]
+  instructorId uuid [not null]
+  isLead boolean [not null, default: false]
+
+  indexes {
+    batchId
+    instructorId
+  }
+}
+
+table batch_schedules {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  batchId uuid [not null]
+  dayOfWeek integer [not null]
+  startTime time [not null]
+  endTime time [not null]
+  roomId uuid
+
+  indexes {
+    batchId
+    roomId
+  }
+}
+
+table batches {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  offeringId uuid [not null]
+  branchId uuid [not null]
+  code varchar(32) [not null, unique]
+  name varchar(120)
+  status batch_status [not null, default: 'planned']
+  startDate date
+  endDate date
+  capacity integer [not null]
+  enrolledCount integer [not null, default: 0]
+  feeOverride "numeric(12, 2)"
+  defaultRoomId uuid
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    offeringId
+    branchId
+    defaultRoomId
+    createdAt
+  }
+}
+
+table branches {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  code varchar(16) [not null, unique]
+  name varchar(160) [not null]
+  addressLine1 varchar(240)
+  addressLine2 varchar(240)
+  city varchar(80)
+  phone varchar(32)
+  email varchar(160)
+  timezone varchar(64) [not null, default: 'Asia/Dhaka']
+  isActive boolean [not null, default: true]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+}
+
+table certificates {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  enrollmentId uuid [not null]
+  courseId uuid [not null]
+  source certificate_source [not null, default: 'institute']
+  govtRegistrationId uuid
+  affiliationBodyId uuid
+  certificateNumber varchar(40) [not null, unique]
+  issuedAt date [not null]
+  finalGrade varchar(8)
+  verificationCode varchar(64) [unique]
+  pdfUrl varchar(400)
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    enrollmentId
+    courseId
+    govtRegistrationId
+    affiliationBodyId
+    createdAt
+  }
+}
+
+table course_modules {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  courseId uuid [not null]
+  title varchar(200) [not null]
+  orderIndex integer [not null]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    courseId
+    createdAt
+  }
+}
+
+table course_offerings {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  courseId uuid [not null]
+  branchId uuid [not null]
+  mode delivery_mode [not null, default: 'onsite']
+  baseFee "numeric(12, 2)" [not null]
+  admissionFee "numeric(12, 2)" [not null, default: '0']
+  currency varchar(3) [not null, default: 'BDT']
+  isActive boolean [not null, default: true]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    courseId
+    branchId
+    createdAt
+  }
+}
+
+table courses {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  departmentId uuid
+  type program_type [not null]
+  code varchar(24) [not null, unique]
+  title varchar(200) [not null]
+  slug varchar(220) [not null, unique]
+  description text
+  durationWeeks integer
+  durationMonths integer
+  totalHours integer
+  level varchar(40)
+  defaultMode delivery_mode [not null, default: 'onsite']
+  isGovtAffiliated boolean [not null, default: false]
+  affiliationBodyId uuid
+  isPublished boolean [not null, default: false]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    departmentId
+    affiliationBodyId
+    createdAt
+  }
+}
+
+table departments {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  branchId uuid
+  name varchar(120) [not null]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    branchId
+    createdAt
+  }
+}
+
+table discounts {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  branchId uuid
+  code varchar(32) [unique]
+  name varchar(120) [not null]
+  type discount_type [not null]
+  value "numeric(12, 2)" [not null]
+  validFrom date
+  validTo date
+
+  indexes {
+    branchId
+  }
+}
+
+table employees {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  userId uuid
+  branchId uuid [not null]
+  employeeCode varchar(24) [not null, unique]
+  fullName varchar(160) [not null]
+  designation varchar(80)
+  phone varchar(32)
+  status employee_status [not null, default: 'active']
+  joinedAt date
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    userId
+    branchId
+    createdAt
+  }
+}
+
+table enrollments {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  studentId uuid [not null]
+  batchId uuid [not null]
+  status enrollment_status [not null, default: 'applied']
+  enrolledAt date
+  completedAt date
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+
+  indexes {
+    (studentId, batchId) [name: 'enrollments_studentId_batchId_unique', unique]
+    studentId
+    batchId
+    createdAt
+  }
+}
+
+table exams {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  batchId uuid [not null]
+  type exam_type [not null]
+  title varchar(160) [not null]
+  totalMarks "numeric(6, 2)" [not null]
+  passMarks "numeric(6, 2)" [not null]
+  weight "numeric(5, 2)" [not null, default: '1']
+  examDate date
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    batchId
+    createdAt
+  }
+}
+
+table govt_exam_events {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  affiliationBodyId uuid [not null]
+  courseId uuid [not null]
+  title varchar(200) [not null]
+  examDate date
+  registrationOpensAt date
+  registrationClosesAt date
+  resultPublishedAt date
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    affiliationBodyId
+    courseId
+    createdAt
+  }
+}
+
+table govt_exam_fees {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  courseId uuid [not null]
+  branchId uuid
+  registrationFee "numeric(12, 2)" [not null]
+  currency varchar(3) [not null, default: 'BDT']
+  validFrom date
+  validTo date
+  isActive boolean [not null, default: true]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    (courseId, branchId) [name: 'govt_exam_fees_courseId_branchId_unique', unique]
+    courseId
+    branchId
+    createdAt
+  }
+}
+
+table govt_exam_registrations {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  studentId uuid [not null]
+  enrollmentId uuid
+  examEventId uuid [not null]
+  branchId uuid [not null]
+  status govt_reg_status [not null, default: 'pending_payment']
+  invoiceId uuid
+  boardRollNumber varchar(48)
+  boardRegistrationNumber varchar(48)
+  resultGrade varchar(16)
+  resultMarks "numeric(6, 2)"
+  registeredAt date
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+
+  indexes {
+    (studentId, examEventId) [name: 'govt_exam_registrations_studentId_examEventId_unique', unique]
+    studentId
+    enrollmentId
+    examEventId
+    branchId
+    invoiceId
+    createdAt
+  }
+}
+
+table grades {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  examId uuid [not null]
+  enrollmentId uuid [not null]
+  marksObtained "numeric(6, 2)"
+  letterGrade varchar(4)
+  remarks varchar(200)
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    examId
+    enrollmentId
+    createdAt
+  }
+}
+
+table installments {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  invoiceId uuid [not null]
+  sequence integer [not null]
+  dueDate date [not null]
+  amountDue "numeric(12, 2)" [not null]
+  amountPaid "numeric(12, 2)" [not null, default: '0']
+
+  indexes {
+    invoiceId
+  }
+}
+
+table instructors {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  employeeId uuid
+  userId uuid
+  fullName varchar(160) [not null]
+  expertise jsonb
+  bio varchar(600)
+  ratePerSession "numeric(12, 2)"
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    employeeId
+    userId
+    createdAt
+  }
+}
+
+table invoice_lines {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  invoiceId uuid [not null]
+  description varchar(200) [not null]
+  quantity integer [not null, default: 1]
+  unitPrice "numeric(12, 2)" [not null]
+  lineTotal "numeric(12, 2)" [not null]
+
+  indexes {
+    invoiceId
+  }
+}
+
+table invoices {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  branchId uuid [not null]
+  studentId uuid [not null]
+  enrollmentId uuid
+  invoiceNumber varchar(32) [not null, unique]
+  status invoice_status [not null, default: 'draft']
+  purpose invoice_purpose [not null, default: 'course_fee']
+  govtRegistrationId uuid
+  currency varchar(3) [not null, default: 'BDT']
+  subtotal "numeric(12, 2)" [not null]
+  discountTotal "numeric(12, 2)" [not null, default: '0']
+  taxTotal "numeric(12, 2)" [not null, default: '0']
+  grandTotal "numeric(12, 2)" [not null]
+  amountPaid "numeric(12, 2)" [not null, default: '0']
+  dueDate date
+  issuedAt date
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+
+  indexes {
+    branchId
+    studentId
+    enrollmentId
+    govtRegistrationId
+    createdAt
+  }
+}
+
+table lead_activities {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  leadId uuid [not null]
+  type varchar(40) [not null]
+  note text
+  activityAt "timestamp with time zone" [not null, default: `now()`]
+  by uuid
+
+  indexes {
+    leadId
+  }
+}
+
+table leads {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  branchId uuid [not null]
+  fullName varchar(160) [not null]
+  phone varchar(32) [not null]
+  email varchar(160)
+  interestedCourseId uuid
+  source lead_source [not null, default: 'walk_in']
+  status lead_status [not null, default: 'new']
+  assignedTo uuid
+  notes text
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+
+  indexes {
+    branchId
+    interestedCourseId
+    createdAt
+  }
+}
+
+table lessons {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  moduleId uuid [not null]
+  title varchar(200) [not null]
+  orderIndex integer [not null]
+  durationMinutes integer
+
+  indexes {
+    moduleId
+  }
+}
+
+table notifications {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  recipientUserId uuid
+  channel varchar(16) [not null]
+  title varchar(200)
+  body text
+  readAt "timestamp with time zone"
+  sentAt "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    recipientUserId
+    sentAt
+  }
+}
+
+table payment_allocations {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  paymentId uuid [not null]
+  installmentId uuid [not null]
+  amount "numeric(12, 2)" [not null]
+
+  indexes {
+    paymentId
+    installmentId
+  }
+}
+
+table payments {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  branchId uuid [not null]
+  invoiceId uuid
+  studentId uuid [not null]
+  receiptNumber varchar(32) [not null, unique]
+  method payment_method [not null]
+  status payment_status [not null, default: 'succeeded']
+  amount "numeric(12, 2)" [not null]
+  reference varchar(120)
+  paidAt date
+  receivedBy uuid
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+
+  indexes {
+    branchId
+    invoiceId
+    studentId
+    createdAt
+  }
+}
+
+table permissions {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  key varchar(80) [not null, unique]
+  description varchar(200)
+}
+
+table refunds {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  paymentId uuid [not null]
+  amount "numeric(12, 2)" [not null]
+  reason text
+  approvedBy uuid
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    paymentId
+    createdAt
+  }
+}
+
+table role_permissions {
+  roleId uuid [not null]
+  permissionId uuid [not null]
+
+  indexes {
+    (roleId, permissionId) [pk]
+    permissionId
+  }
+}
+
+table roles {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  key varchar(48) [not null, unique]
+  name varchar(80) [not null]
+  isSystem boolean [not null, default: false]
+}
+
+table rooms {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  branchId uuid [not null]
+  name varchar(80) [not null]
+  capacity integer [not null]
+  hasComputers boolean [not null, default: false]
+  isActive boolean [not null, default: true]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    branchId
+    createdAt
+  }
+}
+
+table sessions {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  batchId uuid [not null]
+  instructorId uuid
+  roomId uuid
+  sessionDate date [not null]
+  startTime time [not null]
+  endTime time [not null]
+  topic varchar(200)
+  isCancelled boolean [not null, default: false]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    batchId
+    instructorId
+    roomId
+    sessionDate
+    createdAt
+  }
+}
+
+table students {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  userId uuid
+  homeBranchId uuid [not null]
+  studentCode varchar(24) [not null, unique]
+  fullName varchar(160) [not null]
+  phone varchar(32) [not null]
+  email varchar(160)
+  gender gender
+  dateOfBirth date
+  nidOrBirthCert varchar(40)
+  guardianName varchar(160)
+  guardianPhone varchar(32)
+  address text
+  photoUrl varchar(400)
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+  createdBy uuid
+  updatedBy uuid
+
+  indexes {
+    userId
+    homeBranchId
+    createdAt
+  }
+}
+
+table user_roles {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  userId uuid [not null]
+  roleId uuid [not null]
+  branchId uuid
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    userId
+    roleId
+    branchId
+    createdAt
+  }
+}
+
+table users {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  email varchar(160) [not null, unique]
+  phone varchar(32) [unique]
+  passwordHash varchar(255)
+  fullName varchar(160) [not null]
+  status user_status [not null, default: 'invited']
+  emailVerifiedAt "timestamp with time zone"
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    createdAt
+  }
+}
+
+ref attendance_sessionId_sessions_id_fk: attendance.sessionId > sessions.id [delete: no action, update: no action]
+
+ref attendance_enrollmentId_enrollments_id_fk: attendance.enrollmentId > enrollments.id [delete: no action, update: no action]
+
+ref batch_instructors_batchId_batches_id_fk: batch_instructors.batchId > batches.id [delete: no action, update: no action]
+
+ref batch_instructors_instructorId_instructors_id_fk: batch_instructors.instructorId > instructors.id [delete: no action, update: no action]
+
+ref batch_schedules_batchId_batches_id_fk: batch_schedules.batchId > batches.id [delete: no action, update: no action]
+
+ref batch_schedules_roomId_rooms_id_fk: batch_schedules.roomId > rooms.id [delete: no action, update: no action]
+
+ref batches_offeringId_course_offerings_id_fk: batches.offeringId > course_offerings.id [delete: no action, update: no action]
+
+ref batches_branchId_branches_id_fk: batches.branchId > branches.id [delete: no action, update: no action]
+
+ref batches_defaultRoomId_rooms_id_fk: batches.defaultRoomId > rooms.id [delete: no action, update: no action]
+
+ref certificates_enrollmentId_enrollments_id_fk: certificates.enrollmentId > enrollments.id [delete: no action, update: no action]
+
+ref certificates_courseId_courses_id_fk: certificates.courseId > courses.id [delete: no action, update: no action]
+
+ref certificates_govtRegistrationId_govt_exam_registrations_id_fk: certificates.govtRegistrationId > govt_exam_registrations.id [delete: no action, update: no action]
+
+ref certificates_affiliationBodyId_affiliation_bodies_id_fk: certificates.affiliationBodyId > affiliation_bodies.id [delete: no action, update: no action]
+
+ref course_modules_courseId_courses_id_fk: course_modules.courseId > courses.id [delete: no action, update: no action]
+
+ref course_offerings_courseId_courses_id_fk: course_offerings.courseId > courses.id [delete: no action, update: no action]
+
+ref course_offerings_branchId_branches_id_fk: course_offerings.branchId > branches.id [delete: no action, update: no action]
+
+ref courses_departmentId_departments_id_fk: courses.departmentId > departments.id [delete: no action, update: no action]
+
+ref courses_affiliationBodyId_affiliation_bodies_id_fk: courses.affiliationBodyId > affiliation_bodies.id [delete: no action, update: no action]
+
+ref departments_branchId_branches_id_fk: departments.branchId > branches.id [delete: no action, update: no action]
+
+ref discounts_branchId_branches_id_fk: discounts.branchId > branches.id [delete: no action, update: no action]
+
+ref employees_userId_users_id_fk: employees.userId > users.id [delete: no action, update: no action]
+
+ref employees_branchId_branches_id_fk: employees.branchId > branches.id [delete: no action, update: no action]
+
+ref enrollments_studentId_students_id_fk: enrollments.studentId > students.id [delete: no action, update: no action]
+
+ref enrollments_batchId_batches_id_fk: enrollments.batchId > batches.id [delete: no action, update: no action]
+
+ref exams_batchId_batches_id_fk: exams.batchId > batches.id [delete: no action, update: no action]
+
+ref govt_exam_events_affiliationBodyId_affiliation_bodies_id_fk: govt_exam_events.affiliationBodyId > affiliation_bodies.id [delete: no action, update: no action]
+
+ref govt_exam_events_courseId_courses_id_fk: govt_exam_events.courseId > courses.id [delete: no action, update: no action]
+
+ref govt_exam_fees_courseId_courses_id_fk: govt_exam_fees.courseId > courses.id [delete: no action, update: no action]
+
+ref govt_exam_fees_branchId_branches_id_fk: govt_exam_fees.branchId > branches.id [delete: no action, update: no action]
+
+ref govt_exam_registrations_studentId_students_id_fk: govt_exam_registrations.studentId > students.id [delete: no action, update: no action]
+
+ref govt_exam_registrations_enrollmentId_enrollments_id_fk: govt_exam_registrations.enrollmentId > enrollments.id [delete: no action, update: no action]
+
+ref govt_exam_registrations_examEventId_govt_exam_events_id_fk: govt_exam_registrations.examEventId > govt_exam_events.id [delete: no action, update: no action]
+
+ref govt_exam_registrations_branchId_branches_id_fk: govt_exam_registrations.branchId > branches.id [delete: no action, update: no action]
+
+ref govt_exam_registrations_invoiceId_invoices_id_fk: govt_exam_registrations.invoiceId > invoices.id [delete: no action, update: no action]
+
+ref grades_examId_exams_id_fk: grades.examId > exams.id [delete: no action, update: no action]
+
+ref grades_enrollmentId_enrollments_id_fk: grades.enrollmentId > enrollments.id [delete: no action, update: no action]
+
+ref installments_invoiceId_invoices_id_fk: installments.invoiceId > invoices.id [delete: no action, update: no action]
+
+ref instructors_employeeId_employees_id_fk: instructors.employeeId > employees.id [delete: no action, update: no action]
+
+ref instructors_userId_users_id_fk: instructors.userId > users.id [delete: no action, update: no action]
+
+ref invoice_lines_invoiceId_invoices_id_fk: invoice_lines.invoiceId > invoices.id [delete: no action, update: no action]
+
+ref invoices_branchId_branches_id_fk: invoices.branchId > branches.id [delete: no action, update: no action]
+
+ref invoices_studentId_students_id_fk: invoices.studentId > students.id [delete: no action, update: no action]
+
+ref invoices_enrollmentId_enrollments_id_fk: invoices.enrollmentId > enrollments.id [delete: no action, update: no action]
+
+ref invoices_govtRegistrationId_govt_exam_registrations_id_fk: invoices.govtRegistrationId > govt_exam_registrations.id [delete: no action, update: no action]
+
+ref lead_activities_leadId_leads_id_fk: lead_activities.leadId > leads.id [delete: no action, update: no action]
+
+ref leads_branchId_branches_id_fk: leads.branchId > branches.id [delete: no action, update: no action]
+
+ref leads_interestedCourseId_courses_id_fk: leads.interestedCourseId > courses.id [delete: no action, update: no action]
+
+ref lessons_moduleId_course_modules_id_fk: lessons.moduleId > course_modules.id [delete: no action, update: no action]
+
+ref payment_allocations_paymentId_payments_id_fk: payment_allocations.paymentId > payments.id [delete: no action, update: no action]
+
+ref payment_allocations_installmentId_installments_id_fk: payment_allocations.installmentId > installments.id [delete: no action, update: no action]
+
+ref payments_branchId_branches_id_fk: payments.branchId > branches.id [delete: no action, update: no action]
+
+ref payments_invoiceId_invoices_id_fk: payments.invoiceId > invoices.id [delete: no action, update: no action]
+
+ref payments_studentId_students_id_fk: payments.studentId > students.id [delete: no action, update: no action]
+
+ref refunds_paymentId_payments_id_fk: refunds.paymentId > payments.id [delete: no action, update: no action]
+
+ref role_permissions_roleId_roles_id_fk: role_permissions.roleId > roles.id [delete: no action, update: no action]
+
+ref role_permissions_permissionId_permissions_id_fk: role_permissions.permissionId > permissions.id [delete: no action, update: no action]
+
+ref rooms_branchId_branches_id_fk: rooms.branchId > branches.id [delete: no action, update: no action]
+
+ref sessions_batchId_batches_id_fk: sessions.batchId > batches.id [delete: no action, update: no action]
+
+ref sessions_instructorId_instructors_id_fk: sessions.instructorId > instructors.id [delete: no action, update: no action]
+
+ref sessions_roomId_rooms_id_fk: sessions.roomId > rooms.id [delete: no action, update: no action]
+
+ref students_userId_users_id_fk: students.userId > users.id [delete: no action, update: no action]
+
+ref students_homeBranchId_branches_id_fk: students.homeBranchId > branches.id [delete: no action, update: no action]
+
+ref user_roles_userId_users_id_fk: user_roles.userId > users.id [delete: no action, update: no action]
+
+ref user_roles_roleId_roles_id_fk: user_roles.roleId > roles.id [delete: no action, update: no action]
+
+ref user_roles_branchId_branches_id_fk: user_roles.branchId > branches.id [delete: no action, update: no action]
