@@ -1,0 +1,2 @@
+# Normalize line endings to LF in the repo, so Biome's formatter (LF) and Windows checkouts agree.
+* text=eol=lf

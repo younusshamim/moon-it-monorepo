@@ -8,7 +8,17 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
-      "env": []
+      "env": [
+        "DATABASE_URL",
+        "REDIS_URL",
+        "ANTHROPIC_API_KEY",
+        "BETTER_AUTH_SECRET",
+        "SENTRY_DSN",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "PORT",
+        "HOST",
+        "LOG_LEVEL"
+      ]
     },
     "dev": {
       "cache": false,
@@ -26,7 +36,17 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "env": []
+      "env": [
+        "DATABASE_URL",
+        "REDIS_URL",
+        "ANTHROPIC_API_KEY",
+        "BETTER_AUTH_SECRET",
+        "SENTRY_DSN",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "PORT",
+        "HOST",
+        "LOG_LEVEL"
+      ]
     },
     "db:dbml": {
       "inputs": ["src/schema/**"],

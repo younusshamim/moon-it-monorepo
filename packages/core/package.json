@@ -4,15 +4,23 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\" && exit 0"
+    "test": "vitest run"
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",
-    "typescript": "5.9.2"
+    "@types/node": "^22.10.0",
+    "typescript": "5.9.2",
+    "vitest": "^4.1.9"
   }
 }
