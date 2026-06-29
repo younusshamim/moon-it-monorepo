@@ -1,7 +1,6 @@
 // Domain 6 — Affiliation: bodies, exam fees, exam events, registrations. Peer of
 // @moonit/schema/affiliation.
 import {
-  type AnyPgColumn,
   boolean,
   date,
   index,
@@ -14,7 +13,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { courses } from "./catalog.js";
 import { enrollments } from "./enrollment.js";
-import { invoices } from "./finance.js";
 import { branches } from "./organization.js";
 import { students } from "./people.js";
 import { audit, id, timestamps } from "./shared.js";
@@ -101,8 +99,6 @@ export const govtExamRegistrations = pgTable(
       .references(() => branches.id)
       .notNull(),
     status: govtRegStatus().default("pending_payment").notNull(),
-    // Annotated to break the govt_exam_registrations ↔ invoices circular FK type inference.
-    invoiceId: uuid().references((): AnyPgColumn => invoices.id), // the separate fee invoice
     boardRollNumber: varchar({ length: 48 }), // assigned by the body
     boardRegistrationNumber: varchar({ length: 48 }),
     resultGrade: varchar({ length: 16 }),
@@ -117,7 +113,6 @@ export const govtExamRegistrations = pgTable(
     index().on(t.enrollmentId),
     index().on(t.examEventId),
     index().on(t.branchId),
-    index().on(t.invoiceId),
     index().on(t.createdAt),
   ],
 );

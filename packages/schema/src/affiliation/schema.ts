@@ -1,6 +1,7 @@
 // Domain 6 — Affiliation: affiliation bodies, government exam fees, exam events, and the
 // student exam-registration aggregate. See DATABASE_DOMAIN.md §6. Registration fees are tracked
-// separately from `courseOffering.baseFee`; a registration carries its own fee invoice.
+// separately from `courseOffering.baseFee`; the fee invoice references the registration (not
+// the other way around) via `invoices.govtRegistrationId`.
 import { z } from "zod";
 import { audit, id, isoDate, numericString, timestamps } from "../shared/columns.js";
 
@@ -91,7 +92,6 @@ const govtExamRegistrationFields = {
   examEventId: z.uuid(),
   branchId: z.uuid(),
   status: GovtRegStatusSchema, // default "pending_payment"
-  invoiceId: z.uuid().nullable(), // the separate fee invoice
   boardRollNumber: z.string().max(48).nullable(), // assigned by the body
   boardRegistrationNumber: z.string().max(48).nullable(),
   resultGrade: z.string().max(16).nullable(),
@@ -108,7 +108,6 @@ export const GovtExamRegistrationSchema = z.object({
 export const NewGovtExamRegistrationSchema = z.object(govtExamRegistrationFields).partial({
   enrollmentId: true,
   status: true,
-  invoiceId: true,
   boardRollNumber: true,
   boardRegistrationNumber: true,
   resultGrade: true,

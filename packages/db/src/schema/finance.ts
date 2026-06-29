@@ -1,7 +1,6 @@
 // Domain 8 — Finance: invoices, lines, installments, payments, allocations, discounts, refunds.
 // Peer of @moonit/schema/finance.
 import {
-  type AnyPgColumn,
   date,
   index,
   integer,
@@ -41,8 +40,9 @@ export const invoices = pgTable(
     invoiceNumber: varchar({ length: 32 }).notNull().unique(),
     status: invoiceStatus().default("draft").notNull(),
     purpose: invoicePurpose().default("course_fee").notNull(),
-    // Annotated to break the invoices ↔ govt_exam_registrations circular FK type inference.
-    govtRegistrationId: uuid().references((): AnyPgColumn => govtExamRegistrations.id),
+    govtRegistrationId: uuid()
+      .references(() => govtExamRegistrations.id)
+      .unique(),
     currency: varchar({ length: 3 }).default("BDT").notNull(),
     subtotal: numeric({ precision: 12, scale: 2 }).notNull(),
     discountTotal: numeric({ precision: 12, scale: 2 }).default("0").notNull(),
@@ -58,7 +58,6 @@ export const invoices = pgTable(
     index().on(t.branchId),
     index().on(t.studentId),
     index().on(t.enrollmentId),
-    index().on(t.govtRegistrationId),
     index().on(t.createdAt),
   ],
 );
