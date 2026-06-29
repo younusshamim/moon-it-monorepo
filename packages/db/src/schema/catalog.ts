@@ -1,12 +1,14 @@
 // Domain 3 — Catalog: courses, curriculum, per-branch offerings. Peer of @moonit/schema/catalog.
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   numeric,
   pgEnum,
   pgTable,
   text,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -68,6 +70,30 @@ export const lessons = pgTable(
   (t) => [index().on(t.moduleId)],
 );
 
+// Optional varieties of a course ("Regular", "Premium", "Crash"). Branch-agnostic catalog rows;
+// pricing lives on the referencing course_offerings, not here. A course with no varieties has none.
+export const courseVariants = pgTable(
+  "course_variants",
+  {
+    id: id(),
+    courseId: uuid()
+      .references(() => courses.id)
+      .notNull(),
+    name: varchar({ length: 120 }).notNull(), // "Regular", "Premium", "Weekend Batch"
+    code: varchar({ length: 24 }), // optional short code
+    description: text(),
+    orderIndex: integer().default(0).notNull(),
+    isActive: boolean().default(true).notNull(),
+    ...timestamps(),
+  },
+  (t) => [
+    unique().on(t.courseId, t.name), // no duplicate variety names within a course
+    unique().on(t.courseId, t.id), // composite-FK target for course_offerings.(courseId, variantId)
+    index().on(t.courseId),
+    index().on(t.createdAt),
+  ],
+);
+
 export const courseOfferings = pgTable(
   "course_offerings",
   {
@@ -78,6 +104,7 @@ export const courseOfferings = pgTable(
     branchId: uuid()
       .references(() => branches.id)
       .notNull(),
+    variantId: uuid(), // optional variety; null = the course's plain single-price offering
     mode: deliveryMode().default("onsite").notNull(),
     baseFee: numeric({ precision: 12, scale: 2 }).notNull(),
     admissionFee: numeric({ precision: 12, scale: 2 }).default("0").notNull(),
@@ -85,5 +112,18 @@ export const courseOfferings = pgTable(
     isActive: boolean().default(true).notNull(),
     ...timestamps(),
   },
-  (t) => [index().on(t.courseId), index().on(t.branchId), index().on(t.createdAt)],
+  (t) => [
+    // One offering per course+branch+mode+variety. NULLS NOT DISTINCT keeps the no-variety case
+    // (variantId null) to a single offering per course+branch+mode.
+    unique().on(t.courseId, t.branchId, t.mode, t.variantId).nullsNotDistinct(),
+    // A referenced variety must belong to the same course; skipped automatically when variantId is null.
+    foreignKey({
+      columns: [t.courseId, t.variantId],
+      foreignColumns: [courseVariants.courseId, courseVariants.id],
+    }),
+    index().on(t.courseId),
+    index().on(t.branchId),
+    index().on(t.variantId),
+    index().on(t.createdAt),
+  ],
 );

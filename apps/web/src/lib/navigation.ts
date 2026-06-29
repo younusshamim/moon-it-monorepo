@@ -12,8 +12,9 @@ import {
 
 export interface NavItem {
   title: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
+  children?: NavItem[];
 }
 
 export interface NavSection {
@@ -29,16 +30,76 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
   },
   {
-    label: "Manage",
+    label: "Admissions",
     items: [
-      { title: "Students", href: "/students", icon: Users },
-      { title: "Courses", href: "/courses", icon: GraduationCap },
-      { title: "Batches", href: "/batches", icon: CalendarDays },
-      { title: "Payments", href: "/payments", icon: CreditCard },
+      { title: "New Admission", href: "/new-admission", icon: Users },
+      { title: "Leads", href: "/leads", icon: Users },
     ],
   },
   {
-    label: "System",
-    items: [{ title: "Settings", href: "/settings", icon: Settings }],
+    label: "Students",
+    items: [
+      {
+        title: "Students",
+        href: "/students",
+        icon: Users,
+      },
+    ],
+  },
+  {
+    label: "Academics",
+    items: [
+      {
+        title: "Courses",
+        href: "/courses",
+        icon: GraduationCap,
+      },
+      {
+        title: "Batches",
+        href: "/batches",
+        icon: CalendarDays,
+      },
+      { title: "Schedule", href: "/schedule", icon: CalendarDays },
+      { title: "Attendance", href: "/attendance", icon: Users },
+      {
+        title: "Exams & Certificates",
+        icon: GraduationCap,
+        children: [
+          { title: "Exams & Grades", href: "/exams", icon: GraduationCap },
+          { title: "Govt Exam Registration", href: "/govt-exams", icon: GraduationCap },
+          { title: "Certificates", href: "/certificates", icon: GraduationCap },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      {
+        title: "Invoices",
+        href: "/invoices",
+        icon: CreditCard,
+      },
+      { title: "Payments", href: "/payments", icon: CreditCard },
+      { title: "Discounts", href: "/discounts", icon: CreditCard },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { title: "Staff", href: "/staff", icon: Users },
+      { title: "Instructors", href: "/instructors", icon: Users },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { title: "Branches", href: "/branches", icon: Settings },
+      { title: "Rooms", href: "/rooms", icon: Settings },
+      { title: "Departments", href: "/departments", icon: Settings },
+      { title: "Users & Roles", href: "/users", icon: Users },
+      { title: "Affiliation Bodies", href: "/affiliation", icon: Settings },
+      { title: "Audit Log", href: "/audit", icon: Settings },
+    ],
   },
 ];

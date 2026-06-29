@@ -6,6 +6,7 @@ import {
   pgTable,
   primaryKey,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -69,6 +70,7 @@ export const userRoles = pgTable(
     ...timestamps(),
   },
   (t) => [
+    unique().on(t.userId, t.roleId, t.branchId), // no duplicate role assignment per branch
     index().on(t.userId),
     index().on(t.roleId),
     index().on(t.branchId),

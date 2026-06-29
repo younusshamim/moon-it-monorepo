@@ -25,6 +25,7 @@ const leadFields = {
   source: LeadSourceSchema, // default "walk_in"
   status: LeadStatusSchema, // default "new"
   assignedTo: z.uuid().nullable(),
+  convertedStudentId: z.uuid().nullable(), // set on "Convert to Student"
   notes: z.string().nullable(),
 };
 
@@ -35,6 +36,7 @@ export const NewLeadSchema = z.object(leadFields).partial({
   source: true,
   status: true,
   assignedTo: true,
+  convertedStudentId: true,
   notes: true,
 });
 export const UpdateLeadSchema = NewLeadSchema.partial();

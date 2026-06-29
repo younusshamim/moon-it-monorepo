@@ -1,7 +1,6 @@
 {
   "extends": "@moonit/config-ts/react-library.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@moonit/ui/*": ["./src/*"]
     }

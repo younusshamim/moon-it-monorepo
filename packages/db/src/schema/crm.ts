@@ -2,6 +2,7 @@
 import { index, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { courses } from "./catalog.js";
 import { branches } from "./organization.js";
+import { students } from "./people.js";
 import { audit, id, timestamps } from "./shared.js";
 
 export const leadStatus = pgEnum("lead_status", [
@@ -34,11 +35,17 @@ export const leads = pgTable(
     source: leadSource().default("walk_in").notNull(),
     status: leadStatus().default("new").notNull(),
     assignedTo: uuid(),
+    convertedStudentId: uuid().references(() => students.id), // set on "Convert to Student"
     notes: text(),
     ...timestamps(),
     ...audit(),
   },
-  (t) => [index().on(t.branchId), index().on(t.interestedCourseId), index().on(t.createdAt)],
+  (t) => [
+    index().on(t.branchId),
+    index().on(t.interestedCourseId),
+    index().on(t.convertedStudentId),
+    index().on(t.createdAt),
+  ],
 );
 
 export const leadActivities = pgTable(

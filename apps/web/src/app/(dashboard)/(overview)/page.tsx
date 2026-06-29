@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { OverviewCards } from "@/app/(dashboard)/_components/overview-cards";
+import { OverviewCards } from "@/app/(dashboard)/(overview)/_components/overview-cards";
 import { healthQueryOptions } from "@/lib/api/queries/health";
 import { getQueryClient } from "@/lib/query/get-query-client";
 

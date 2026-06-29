@@ -43,6 +43,7 @@ export const invoices = pgTable(
     govtRegistrationId: uuid()
       .references(() => govtExamRegistrations.id)
       .unique(),
+    discountId: uuid().references(() => discounts.id), // which discount produced discountTotal
     currency: varchar({ length: 3 }).default("BDT").notNull(),
     subtotal: numeric({ precision: 12, scale: 2 }).notNull(),
     discountTotal: numeric({ precision: 12, scale: 2 }).default("0").notNull(),
@@ -58,6 +59,7 @@ export const invoices = pgTable(
     index().on(t.branchId),
     index().on(t.studentId),
     index().on(t.enrollmentId),
+    index().on(t.discountId),
     index().on(t.createdAt),
   ],
 );

@@ -10,7 +10,7 @@ build/
 .next/
 out/
 *.tsbuildinfo
-doc/
+docs/
 
 # Turborepo
 .turbo/

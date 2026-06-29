@@ -15,6 +15,20 @@
       "when": 1782559070668,
       "tag": "0001_init_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782730122690,
+      "tag": "0002_parched_rafael_vega",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782731573444,
+      "tag": "0003_minor_crusher_hogan",
+      "breakpoints": true
     }
   ]
 }

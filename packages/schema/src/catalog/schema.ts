@@ -78,10 +78,37 @@ export type Lesson = z.infer<typeof LessonSchema>;
 export type NewLesson = z.infer<typeof NewLessonSchema>;
 export type UpdateLesson = z.infer<typeof UpdateLessonSchema>;
 
+// ── CourseVariant (optional priced varieties of a course) ─────────────────────
+// Optional: a course with no varieties has zero rows here. A variety is a branch-agnostic catalog
+// concept ("Regular", "Premium", "Crash"); its price lives on the `courseOffering` rows that
+// reference it (variantId), so price is never duplicated and can still differ per branch.
+const courseVariantFields = {
+  courseId: z.uuid(),
+  name: z.string().max(120), // "Regular", "Premium", "Weekend Batch" — unique per course
+  code: z.string().max(24).nullable(), // optional short code
+  description: z.string().nullable(),
+  orderIndex: z.number().int().nonnegative(), // default 0
+  isActive: z.boolean(), // default true
+};
+
+export const CourseVariantSchema = z.object({ id, ...courseVariantFields, ...timestamps });
+export const NewCourseVariantSchema = z.object(courseVariantFields).partial({
+  code: true,
+  description: true,
+  orderIndex: true,
+  isActive: true,
+});
+export const UpdateCourseVariantSchema = NewCourseVariantSchema.partial();
+
+export type CourseVariant = z.infer<typeof CourseVariantSchema>;
+export type NewCourseVariant = z.infer<typeof NewCourseVariantSchema>;
+export type UpdateCourseVariant = z.infer<typeof UpdateCourseVariantSchema>;
+
 // ── CourseOffering (per-branch, priced) ───────────────────────────────────────
 const courseOfferingFields = {
   courseId: z.uuid(),
   branchId: z.uuid(),
+  variantId: z.uuid().nullable(), // optional variety; null = the course's plain single-price offering
   mode: DeliveryModeSchema, // default "onsite"
   baseFee: numericString(),
   admissionFee: numericString(), // default "0"
@@ -91,6 +118,7 @@ const courseOfferingFields = {
 
 export const CourseOfferingSchema = z.object({ id, ...courseOfferingFields, ...timestamps });
 export const NewCourseOfferingSchema = z.object(courseOfferingFields).partial({
+  variantId: true,
   mode: true,
   admissionFee: true,
   currency: true,

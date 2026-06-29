@@ -1,5 +1,5 @@
 // Domain 8 (Assessment) — exams, grades, certificates. Peer of @moonit/schema/assessment.
-import { date, index, numeric, pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { date, index, numeric, pgEnum, pgTable, unique, uuid, varchar } from "drizzle-orm/pg-core";
 import { affiliationBodies, govtExamRegistrations } from "./affiliation.js";
 import { courses } from "./catalog.js";
 import { enrollments } from "./enrollment.js";
@@ -48,7 +48,12 @@ export const grades = pgTable(
     remarks: varchar({ length: 200 }),
     ...timestamps(),
   },
-  (t) => [index().on(t.examId), index().on(t.enrollmentId), index().on(t.createdAt)],
+  (t) => [
+    unique().on(t.examId, t.enrollmentId), // one grade per student per exam
+    index().on(t.examId),
+    index().on(t.enrollmentId),
+    index().on(t.createdAt),
+  ],
 );
 
 export const certificates = pgTable(

@@ -19,6 +19,7 @@ const invoiceFields = {
   status: InvoiceStatusSchema, // default "draft"
   purpose: InvoicePurposeSchema, // default "course_fee"
   govtRegistrationId: z.uuid().nullable(),
+  discountId: z.uuid().nullable(), // which discount produced discountTotal
   currency: z.string().length(3), // default "BDT"
   subtotal: numericString(),
   discountTotal: numericString(), // default "0"
@@ -35,6 +36,7 @@ export const NewInvoiceSchema = z.object(invoiceFields).partial({
   status: true,
   purpose: true,
   govtRegistrationId: true,
+  discountId: true,
   currency: true,
   discountTotal: true,
   taxTotal: true,

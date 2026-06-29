@@ -291,6 +291,7 @@ table course_offerings {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   courseId uuid [not null]
   branchId uuid [not null]
+  variantId uuid
   mode delivery_mode [not null, default: 'onsite']
   baseFee "numeric(12, 2)" [not null]
   admissionFee "numeric(12, 2)" [not null, default: '0']
@@ -301,8 +302,31 @@ table course_offerings {
   deletedAt "timestamp with time zone"
 
   indexes {
+    (courseId, branchId, mode, variantId) [name: 'course_offerings_courseId_branchId_mode_variantId_unique', unique]
+    
     courseId
     branchId
+    variantId
+    createdAt
+  }
+}
+
+table course_variants {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  courseId uuid [not null]
+  name varchar(120) [not null]
+  code varchar(24)
+  description text
+  orderIndex integer [not null, default: 0]
+  isActive boolean [not null, default: true]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+  deletedAt "timestamp with time zone"
+
+  indexes {
+    (courseId, name) [name: 'course_variants_courseId_name_unique', unique]
+    (courseId, id) [name: 'course_variants_courseId_id_unique', unique]
+    courseId
     createdAt
   }
 }
@@ -472,7 +496,6 @@ table govt_exam_registrations {
   examEventId uuid [not null]
   branchId uuid [not null]
   status govt_reg_status [not null, default: 'pending_payment']
-  invoiceId uuid
   boardRollNumber varchar(48)
   boardRegistrationNumber varchar(48)
   resultGrade varchar(16)
@@ -490,7 +513,6 @@ table govt_exam_registrations {
     enrollmentId
     examEventId
     branchId
-    invoiceId
     createdAt
   }
 }
@@ -507,6 +529,7 @@ table grades {
   deletedAt "timestamp with time zone"
 
   indexes {
+    (examId, enrollmentId) [name: 'grades_examId_enrollmentId_unique', unique]
     examId
     enrollmentId
     createdAt
@@ -566,7 +589,8 @@ table invoices {
   invoiceNumber varchar(32) [not null, unique]
   status invoice_status [not null, default: 'draft']
   purpose invoice_purpose [not null, default: 'course_fee']
-  govtRegistrationId uuid
+  govtRegistrationId uuid [unique]
+  discountId uuid
   currency varchar(3) [not null, default: 'BDT']
   subtotal "numeric(12, 2)" [not null]
   discountTotal "numeric(12, 2)" [not null, default: '0']
@@ -585,7 +609,7 @@ table invoices {
     branchId
     studentId
     enrollmentId
-    govtRegistrationId
+    discountId
     createdAt
   }
 }
@@ -613,6 +637,7 @@ table leads {
   source lead_source [not null, default: 'walk_in']
   status lead_status [not null, default: 'new']
   assignedTo uuid
+  convertedStudentId uuid
   notes text
   createdAt "timestamp with time zone" [not null, default: `now()`]
   updatedAt "timestamp with time zone" [not null, default: `now()`]
@@ -623,6 +648,7 @@ table leads {
   indexes {
     branchId
     interestedCourseId
+    convertedStudentId
     createdAt
   }
 }
@@ -809,6 +835,7 @@ table user_roles {
   deletedAt "timestamp with time zone"
 
   indexes {
+    (userId, roleId, branchId) [name: 'user_roles_userId_roleId_branchId_unique', unique]
     userId
     roleId
     branchId
@@ -865,6 +892,10 @@ ref course_offerings_courseId_courses_id_fk: course_offerings.courseId > courses
 
 ref course_offerings_branchId_branches_id_fk: course_offerings.branchId > branches.id [delete: no action, update: no action]
 
+ref course_offerings_courseId_variantId_course_variants_courseId_id_fk: course_offerings.(courseId, variantId) > course_variants.(courseId, id) [delete: no action, update: no action]
+
+ref course_variants_courseId_courses_id_fk: course_variants.courseId > courses.id [delete: no action, update: no action]
+
 ref courses_departmentId_departments_id_fk: courses.departmentId > departments.id [delete: no action, update: no action]
 
 ref courses_affiliationBodyId_affiliation_bodies_id_fk: courses.affiliationBodyId > affiliation_bodies.id [delete: no action, update: no action]
@@ -899,8 +930,6 @@ ref govt_exam_registrations_examEventId_govt_exam_events_id_fk: govt_exam_regist
 
 ref govt_exam_registrations_branchId_branches_id_fk: govt_exam_registrations.branchId > branches.id [delete: no action, update: no action]
 
-ref govt_exam_registrations_invoiceId_invoices_id_fk: govt_exam_registrations.invoiceId > invoices.id [delete: no action, update: no action]
-
 ref grades_examId_exams_id_fk: grades.examId > exams.id [delete: no action, update: no action]
 
 ref grades_enrollmentId_enrollments_id_fk: grades.enrollmentId > enrollments.id [delete: no action, update: no action]
@@ -921,11 +950,15 @@ ref invoices_enrollmentId_enrollments_id_fk: invoices.enrollmentId > enrollments
 
 ref invoices_govtRegistrationId_govt_exam_registrations_id_fk: invoices.govtRegistrationId > govt_exam_registrations.id [delete: no action, update: no action]
 
+ref invoices_discountId_discounts_id_fk: invoices.discountId > discounts.id [delete: no action, update: no action]
+
 ref lead_activities_leadId_leads_id_fk: lead_activities.leadId > leads.id [delete: no action, update: no action]
 
 ref leads_branchId_branches_id_fk: leads.branchId > branches.id [delete: no action, update: no action]
 
 ref leads_interestedCourseId_courses_id_fk: leads.interestedCourseId > courses.id [delete: no action, update: no action]
+
+ref leads_convertedStudentId_students_id_fk: leads.convertedStudentId > students.id [delete: no action, update: no action]
 
 ref lessons_moduleId_course_modules_id_fk: lessons.moduleId > course_modules.id [delete: no action, update: no action]
 
