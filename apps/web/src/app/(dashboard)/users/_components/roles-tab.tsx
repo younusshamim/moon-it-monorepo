@@ -13,6 +13,7 @@ import {
 } from "@moonit/ui/components/table";
 import { Shield } from "lucide-react";
 import { useState } from "react";
+import { CreateRoleDrawer } from "./create-role-drawer";
 import { EditRoleDrawer } from "./edit-role-drawer";
 
 export interface DummyRole {
@@ -43,7 +44,10 @@ export function RolesTab({
     <div className="flex flex-col gap-8">
       {/* Roles list */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold">Roles</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Roles</h3>
+          <CreateRoleDrawer permissions={permissions} />
+        </div>
         <div className="rounded-md border">
           <Table>
             <TableHeader>

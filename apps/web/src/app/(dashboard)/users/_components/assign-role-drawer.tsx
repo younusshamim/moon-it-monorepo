@@ -99,8 +99,12 @@ export function AssignRoleDrawer({
             </SheetDescription>
           </SheetHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6 mt-6">
-            <FieldGroup className="px-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="mt-6 flex flex-1 flex-col min-h-0"
+          >
+            <FieldGroup className="flex-1 overflow-y-auto px-4">
               <Field data-invalid={errors.userId ? true : undefined}>
                 <FieldLabel>User</FieldLabel>
                 <Controller
