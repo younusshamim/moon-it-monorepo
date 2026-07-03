@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CreditCard,
   GraduationCap,
+  History,
   LayoutDashboard,
   type LucideIcon,
   Settings,
@@ -98,8 +99,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { title: "Rooms", href: "/rooms", icon: Settings },
       { title: "Departments", href: "/departments", icon: Settings },
       { title: "Users & Roles", href: "/users", icon: Users },
-      { title: "Affiliation Bodies", href: "/affiliation", icon: Settings },
-      { title: "Audit Log", href: "/audit", icon: Settings },
+      { title: "Affiliation Bodies", href: "/affiliations", icon: Settings },
+      { title: "Audit Log", href: "/audit", icon: History },
     ],
   },
 ];
