@@ -11,6 +11,8 @@ import { ConfigModule } from "./config/config.module.js";
 import { env } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
+import { IamModule } from "./modules/iam/iam.module.js";
+import { OrganizationModule } from "./modules/organization/organization.module.js";
 import { RedisModule } from "./redis/redis.module.js";
 
 // Outbound response validation catches contract drift in dev/CI without paying per-response CPU
@@ -21,7 +23,15 @@ const responseValidationProviders: Provider[] =
     : [];
 
 @Module({
-  imports: [ConfigModule, PinoLoggerModule, DatabaseModule, RedisModule, HealthModule],
+  imports: [
+    ConfigModule,
+    PinoLoggerModule,
+    DatabaseModule,
+    RedisModule,
+    HealthModule,
+    OrganizationModule,
+    IamModule,
+  ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_FILTER, useClass: DomainExceptionFilter },

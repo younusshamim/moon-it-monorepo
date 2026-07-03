@@ -1,29 +1,30 @@
 // Domain 1 — Identity & Access (RBAC): users, roles, permissions, branch-scoped assignment.
 // See DATABASE_DOMAIN.md §2. `userRole.branchId` is the multi-branch lever (null = all branches).
 import { z } from "zod";
-import { id, isoDateTime, timestamps } from "../shared/columns.js";
+import { id, timestamps } from "../shared/columns.js";
 
 export const UserStatusSchema = z.enum(["active", "suspended", "invited"]);
 export type UserStatus = z.infer<typeof UserStatusSchema>;
 
 // ── User ────────────────────────────────────────────────────────────────────
+// Maps onto Better Auth's core `user` model: `fullName` is Better Auth's `name`, `emailVerified`
+// and `image` are Better Auth fields. Credentials live in the `accounts` table, so there is no
+// password on the user row.
 const userFields = {
   email: z.email().max(160), // unique
   phone: z.string().max(32).nullable(), // unique
-  passwordHash: z.string().max(255).nullable(),
   fullName: z.string().max(160),
   status: UserStatusSchema, // default "invited"
-  // Modeled explicitly as a nullable timestamp (the domain doc's `timestamps.createdAt` reuse
-  // was a column-definition shorthand, not the intended semantics).
-  emailVerifiedAt: isoDateTime().nullable(),
+  emailVerified: z.boolean(), // default false
+  image: z.string().max(255).nullable(),
 };
 
 export const UserSchema = z.object({ id, ...userFields, ...timestamps });
 export const NewUserSchema = z.object(userFields).partial({
   phone: true,
-  passwordHash: true,
   status: true,
-  emailVerifiedAt: true,
+  emailVerified: true,
+  image: true,
 });
 export const UpdateUserSchema = NewUserSchema.partial();
 

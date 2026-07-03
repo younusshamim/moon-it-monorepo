@@ -178,6 +178,54 @@ table audit_logs {
   }
 }
 
+table auth_accounts {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  userId uuid [not null]
+  accountId varchar(255) [not null]
+  providerId varchar(64) [not null]
+  password text
+  accessToken text
+  refreshToken text
+  idToken text
+  accessTokenExpiresAt "timestamp with time zone"
+  refreshTokenExpiresAt "timestamp with time zone"
+  scope text
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    userId
+  }
+}
+
+table auth_sessions {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  userId uuid [not null]
+  token varchar(255) [not null, unique]
+  expiresAt "timestamp with time zone" [not null]
+  ipAddress varchar(64)
+  userAgent text
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    userId
+  }
+}
+
+table auth_verifications {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  identifier varchar(255) [not null]
+  value text [not null]
+  expiresAt "timestamp with time zone" [not null]
+  createdAt "timestamp with time zone" [not null, default: `now()`]
+  updatedAt "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    identifier
+  }
+}
+
 table batch_instructors {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   batchId uuid [not null]
@@ -847,10 +895,10 @@ table users {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   email varchar(160) [not null, unique]
   phone varchar(32) [unique]
-  passwordHash varchar(255)
   fullName varchar(160) [not null]
   status user_status [not null, default: 'invited']
-  emailVerifiedAt "timestamp with time zone"
+  emailVerified boolean [not null, default: false]
+  image varchar(255)
   createdAt "timestamp with time zone" [not null, default: `now()`]
   updatedAt "timestamp with time zone" [not null, default: `now()`]
   deletedAt "timestamp with time zone"
@@ -863,6 +911,10 @@ table users {
 ref attendance_sessionId_sessions_id_fk: attendance.sessionId > sessions.id [delete: no action, update: no action]
 
 ref attendance_enrollmentId_enrollments_id_fk: attendance.enrollmentId > enrollments.id [delete: no action, update: no action]
+
+ref auth_accounts_userId_users_id_fk: auth_accounts.userId > users.id [delete: cascade, update: no action]
+
+ref auth_sessions_userId_users_id_fk: auth_sessions.userId > users.id [delete: cascade, update: no action]
 
 ref batch_instructors_batchId_batches_id_fk: batch_instructors.batchId > batches.id [delete: no action, update: no action]
 

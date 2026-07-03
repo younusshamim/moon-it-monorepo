@@ -5,7 +5,6 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
-  timestamp,
   unique,
   uuid,
   varchar,
@@ -15,16 +14,19 @@ import { id, timestamps } from "./shared.js";
 
 export const userStatus = pgEnum("user_status", ["active", "suspended", "invited"]);
 
+// Peer of Better Auth's core `user` model: `name` maps to `fullName`, `emailVerified` and `image`
+// are Better Auth fields, and `phone`/`status` ride along as domain extras (see @moonit/auth).
+// Credentials live in `accounts` (schema/auth.ts), never on the user row.
 export const users = pgTable(
   "users",
   {
     id: id(),
     email: varchar({ length: 160 }).notNull().unique(),
     phone: varchar({ length: 32 }).unique(),
-    passwordHash: varchar({ length: 255 }),
     fullName: varchar({ length: 160 }).notNull(),
     status: userStatus().default("invited").notNull(),
-    emailVerifiedAt: timestamp({ withTimezone: true, mode: "string" }),
+    emailVerified: boolean().default(false).notNull(),
+    image: varchar({ length: 255 }),
     ...timestamps(),
   },
   (t) => [index().on(t.createdAt)],

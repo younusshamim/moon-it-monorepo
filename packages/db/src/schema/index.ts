@@ -1,5 +1,6 @@
 export * from "./affiliation.js";
 export * from "./assessment.js";
+export * from "./auth.js";
 export * from "./catalog.js";
 export * from "./crm.js";
 export * from "./enrollment.js";

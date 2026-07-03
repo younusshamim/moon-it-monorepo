@@ -6,6 +6,7 @@ import "./instrument.js";
 
 import type { IncomingMessage } from "node:http";
 import { generateCorrelationId } from "@moonit/core";
+import { RequestMethod } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -30,6 +31,12 @@ async function bootstrap(): Promise<void> {
   });
 
   app.useLogger(app.get(Logger));
+
+  // Version every feature route under `/v1`; `/health` stays unprefixed for orchestrator/web probes
+  // (docs/API_AND_AUTH_PLAN.md, Phase 0). Set before the OpenAPI doc so Swagger reflects the prefix.
+  app.setGlobalPrefix("v1", {
+    exclude: [{ path: "health", method: RequestMethod.ALL }],
+  });
 
   // Echo the correlation id back so clients can trace their request.
   adapter.getInstance().addHook("onRequest", (request, reply, done) => {
