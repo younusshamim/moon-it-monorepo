@@ -1,5 +1,5 @@
 // Exposes the validated `env` object as an injectable provider so feature code can depend on
-// configuration through DI (and override it in tests) without importing the module directly.
+// configuration through DI without importing the module directly.
 import { Global, Module } from "@nestjs/common";
 import { type Env, env } from "./env.js";
 

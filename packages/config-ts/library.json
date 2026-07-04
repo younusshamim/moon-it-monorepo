@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Library (compiled)",
   "extends": "./base.json",
-  "_comment": "For internal packages compiled to ./dist and consumed by Node apps (e.g. apps/api). Build with `tsc` (emits JS + .d.ts); typecheck with `tsc --noEmit`. package.json exports point `default` at ./dist (prod) and add a `development` condition -> ./src so dev/test resolve TypeScript source via Node's --conditions=development. No `composite` (it conflicts with --noEmit and we order builds via Turborepo ^build, not project references). Each package sets its own `rootDir`/`outDir` (those resolve relative to the file that declares them, so they can't live here). See INFRASTRUCTURE.md §2.",
+  "_comment": "For internal packages compiled to ./dist and consumed by Node apps (e.g. apps/api). Build with `tsc` (emits JS + .d.ts); typecheck with `tsc --noEmit`. package.json exports point `default` at ./dist (prod) and add a `development` condition -> ./src so development builds resolve TypeScript source via Node's `--conditions=development`. No `composite` (it conflicts with `--noEmit` and we order builds via Turborepo ^build, not project references). Each package sets its own `rootDir`/`outDir` (those resolve relative to the file that declares them, so they can't live here). See INFRASTRUCTURE.md §2.",
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,

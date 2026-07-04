@@ -14,13 +14,11 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "test": "vitest run"
+    "lint": "biome check ."
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",
     "@types/node": "^22.10.0",
-    "typescript": "5.9.2",
-    "vitest": "^4.1.9"
+    "typescript": "5.9.2"
   }
 }

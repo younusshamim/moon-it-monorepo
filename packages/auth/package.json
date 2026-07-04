@@ -19,7 +19,6 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\" && exit 0",
     "auth:bootstrap": "tsx --conditions=development --env-file-if-exists=.env src/bootstrap.ts"
   },
   "dependencies": {

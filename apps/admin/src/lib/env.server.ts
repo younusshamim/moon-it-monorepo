@@ -5,7 +5,7 @@ import "server-only";
 import { z } from "zod";
 
 const ServerEnvSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  NODE_ENV: z.enum(["development", "production"]).default("development"),
   // Base URL the server (RSC, Server Actions, prefetch) uses to reach the NestJS API. May be a
   // private/internal hostname in production, distinct from the browser-facing NEXT_PUBLIC_API_URL.
   API_URL: z.url(),

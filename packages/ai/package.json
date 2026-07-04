@@ -14,8 +14,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "test": "echo \"no tests yet\" && exit 0"
+    "lint": "biome check ."
   },
   "dependencies": {
     "@moonit/core": "workspace:*",

@@ -15,7 +15,6 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\" && exit 0",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -36,7 +35,6 @@
     "drizzle-dbml-generator": "^0.10.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.20.0",
-    "typescript": "5.9.2",
-    "vitest": "^4.1.9"
+    "typescript": "5.9.2"
   }
 }
