@@ -1,14 +1,13 @@
 {
   "extends": "@moonit/config-ts/base.json",
   "compilerOptions": {
-    // No `rootDir`: typecheck only (--noEmit); the build is done by SWC, not tsc.
-    // Workspace packages resolve via their package.json `types` -> dist .d.ts (built by `turbo ^build`).
-    // NestJS relies on decorator metadata reflection; the base config's
-    // verbatimModuleSyntax/isolatedModules would strip the type imports DI needs.
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "verbatimModuleSyntax": false,
-    "isolatedModules": false
+    "isolatedModules": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

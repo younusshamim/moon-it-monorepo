@@ -10,7 +10,11 @@
       "decoratorMetadata": true
     },
     "target": "es2022",
-    "keepClassNames": true
+    "keepClassNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "module": {
     "type": "nodenext"

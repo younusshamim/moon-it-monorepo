@@ -1,5 +1,5 @@
 {
-  "name": "@moonit/web",
+  "name": "@moonit/admin",
   "version": "0.0.0",
   "private": true,
   "type": "module",

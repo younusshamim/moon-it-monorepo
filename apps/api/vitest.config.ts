@@ -22,6 +22,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Intra-app `@/*` -> `src/*`; mirrors tsconfig/.swcrc paths. Trailing slash =
+      // prefix replacement, and Vite remaps the `.js` specifier to the `.ts` source.
+      "@/": pkg("./src/"),
       "@moonit/core": pkg("../../packages/core/src/index.ts"),
       "@moonit/db": pkg("../../packages/db/src/index.ts"),
       "@moonit/schema": pkg("../../packages/schema/src/index.ts"),

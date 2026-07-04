@@ -71,7 +71,7 @@ export function CreateFeeDrawer({
   }
 
   function onSubmit(data: FormValues) {
-    const branchId = data.branchId === ALL_BRANCHES ? null : data.branchId;
+    const _branchId = data.branchId === ALL_BRANCHES ? null : data.branchId;
     // TODO: call API — fee will be created with isActive: true
     // console.log("Create exam fee:", { ...data, branchId });
     reset();
