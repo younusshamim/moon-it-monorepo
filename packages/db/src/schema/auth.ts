@@ -11,7 +11,12 @@ import { index, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-c
 import { users } from "./iam.js";
 import { id } from "./shared.js";
 
-const tstz = () => timestamp({ withTimezone: true, mode: "string" });
+// `mode: "date"` (drizzle's pg default) — unlike the rest of the schema these tables are written and
+// read *only* by Better Auth, which works in JS `Date`s (inserts, and `expiresAt` </> `new Date()`
+// filters). Date mode lets drizzle serialize those directly; the physical column type is unchanged
+// (no migration). The `iam.users` peer stays `mode: "string"` for the wire contract — @moonit/auth
+// coerces Better Auth's `Date`s to ISO strings on user writes (see `withUserDateShim`).
+const tstz = () => timestamp({ withTimezone: true });
 
 // Non-soft-deletable infra rows: explicit created/updated (no `deletedAt` from the shared factory).
 const authTimestamps = () => ({
@@ -19,7 +24,7 @@ const authTimestamps = () => ({
   updatedAt: tstz()
     .defaultNow()
     .notNull()
-    .$onUpdate(() => new Date().toISOString()),
+    .$onUpdate(() => new Date()),
 });
 
 export const authSessions = pgTable(

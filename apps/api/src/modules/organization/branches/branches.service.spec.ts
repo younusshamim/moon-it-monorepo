@@ -19,6 +19,7 @@ function fakeRepository(overrides: Partial<BranchesRepository> = {}): BranchesRe
 }
 
 const branch = { id: "b1", code: "DHK-01", name: "Head Office" } as unknown as Branch;
+const ACTOR = "00000000-0000-0000-0000-000000000001";
 
 describe("BranchesService", () => {
   describe("getById", () => {
@@ -42,16 +43,18 @@ describe("BranchesService", () => {
       const service = new BranchesService(
         fakeRepository({ create: vi.fn().mockResolvedValue(branch) }),
       );
-      await expect(service.create({ code: "DHK-01", name: "Head Office" })).resolves.toBe(branch);
+      await expect(service.create({ code: "DHK-01", name: "Head Office" }, ACTOR)).resolves.toBe(
+        branch,
+      );
     });
 
     it("maps a Postgres unique violation to ConflictError", async () => {
       const service = new BranchesService(
         fakeRepository({ create: vi.fn().mockRejectedValue({ code: "23505" }) }),
       );
-      await expect(service.create({ code: "DHK-01", name: "Head Office" })).rejects.toBeInstanceOf(
-        ConflictError,
-      );
+      await expect(
+        service.create({ code: "DHK-01", name: "Head Office" }, ACTOR),
+      ).rejects.toBeInstanceOf(ConflictError);
     });
   });
 
@@ -60,14 +63,14 @@ describe("BranchesService", () => {
       const service = new BranchesService(
         fakeRepository({ softDelete: vi.fn().mockResolvedValue(undefined) }),
       );
-      await expect(service.remove("nope")).rejects.toBeInstanceOf(NotFoundError);
+      await expect(service.remove("nope", ACTOR)).rejects.toBeInstanceOf(NotFoundError);
     });
 
     it("resolves when a live row was soft-deleted", async () => {
       const service = new BranchesService(
         fakeRepository({ softDelete: vi.fn().mockResolvedValue("b1") }),
       );
-      await expect(service.remove("b1")).resolves.toBeUndefined();
+      await expect(service.remove("b1", ACTOR)).resolves.toBeUndefined();
     });
   });
 

@@ -14,15 +14,21 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "echo \"no tests yet\" && exit 0"
+    "test": "echo \"no tests yet\" && exit 0",
+    "auth:bootstrap": "tsx --conditions=development --env-file-if-exists=.env src/bootstrap.ts"
   },
   "dependencies": {
     "@moonit/core": "workspace:*",
     "@moonit/db": "workspace:*",
-    "@moonit/schema": "workspace:*"
+    "@moonit/schema": "workspace:*",
+    "better-auth": "^1.6.23",
+    "drizzle-orm": "^0.45.2",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.23.0",
     "typescript": "5.9.2"
   }
 }

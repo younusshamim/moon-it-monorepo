@@ -14,6 +14,9 @@ const EnvSchema = z.object({
   REDIS_URL: z.url(),
   ANTHROPIC_API_KEY: z.string().min(1),
   BETTER_AUTH_SECRET: z.string().min(32),
+  // Public origin the API is reached at, so Better Auth builds absolute URLs and trusts the origin.
+  // Optional: when unset Better Auth derives it from the incoming request (fine for local dev).
+  BETTER_AUTH_URL: z.url().optional(),
 
   // Optional observability sinks — wiring stays inert when unset.
   SENTRY_DSN: z.url().optional(),

@@ -1,6 +1,7 @@
 // HTTP edge for branches. Routes sit under the global `/v1` prefix (→ `/v1/branches`). Bodies/queries
 // are validated by the global ZodValidationPipe; responses are validated against the entity schema by
-// the ZodSerializerInterceptor. Unprotected for now — permission guards arrive in Phase 6.
+// the ZodSerializerInterceptor. The global AuthGuard requires a session (Phase 5); the authenticated
+// user stamps the `createdBy`/`updatedBy` audit columns. Permission checks arrive in Phase 6.
 import type { Branch, Paginated } from "@moonit/schema";
 import {
   Body,
@@ -16,6 +17,8 @@ import {
 } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
+import { CurrentUser } from "../../../auth/current-user.decorator.js";
+import type { SessionUser } from "../../../auth/session-user.js";
 import { PaginationQueryDto } from "../../../common/dto/pagination.dto.js";
 import { BranchesService } from "./branches.service.js";
 import { BranchDto, BranchPageDto, CreateBranchDto, UpdateBranchDto } from "./dto/branch.dto.js";
@@ -39,19 +42,23 @@ export class BranchesController {
 
   @Post()
   @ZodSerializerDto(BranchDto)
-  create(@Body() body: CreateBranchDto): Promise<Branch> {
-    return this.service.create(body);
+  create(@Body() body: CreateBranchDto, @CurrentUser() user: SessionUser): Promise<Branch> {
+    return this.service.create(body, user.id);
   }
 
   @Patch(":id")
   @ZodSerializerDto(BranchDto)
-  update(@Param("id", ParseUUIDPipe) id: string, @Body() body: UpdateBranchDto): Promise<Branch> {
-    return this.service.update(id, body);
+  update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: UpdateBranchDto,
+    @CurrentUser() user: SessionUser,
+  ): Promise<Branch> {
+    return this.service.update(id, body, user.id);
   }
 
   @Delete(":id")
   @HttpCode(204)
-  remove(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
-    return this.service.remove(id);
+  remove(@Param("id", ParseUUIDPipe) id: string, @CurrentUser() user: SessionUser): Promise<void> {
+    return this.service.remove(id, user.id);
   }
 }

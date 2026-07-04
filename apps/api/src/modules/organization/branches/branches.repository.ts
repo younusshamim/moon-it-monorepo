@@ -1,6 +1,6 @@
 // Drizzle access for branches, isolated here so the service stays testable (arch-use-repository-pattern).
-// Reads exclude soft-deleted rows; DELETE stamps `deletedAt`. Audit columns (createdBy/updatedBy) are
-// left null until auth lands (Phase 5). See docs/API_AND_AUTH_PLAN.md, Phase 1.
+// Reads exclude soft-deleted rows; DELETE stamps `deletedAt`. Writes stamp the `createdBy`/`updatedBy`
+// audit columns with the authenticated user id (`actorId`). See docs/API_AND_AUTH_PLAN.md, Phase 5.
 
 import { branches, type Database } from "@moonit/db";
 import type { Branch, NewBranch, Paginated, PaginationQuery, UpdateBranch } from "@moonit/schema";
@@ -46,25 +46,28 @@ export class BranchesRepository {
     return row;
   }
 
-  async create(input: NewBranch): Promise<Branch> {
-    const [row] = await this.db.insert(branches).values(input).returning();
+  async create(input: NewBranch, actorId: string): Promise<Branch> {
+    const [row] = await this.db
+      .insert(branches)
+      .values({ ...input, createdBy: actorId, updatedBy: actorId })
+      .returning();
     return row as Branch;
   }
 
-  async update(id: string, input: UpdateBranch): Promise<Branch | undefined> {
+  async update(id: string, input: UpdateBranch, actorId: string): Promise<Branch | undefined> {
     const [row] = await this.db
       .update(branches)
-      .set(input)
+      .set({ ...input, updatedBy: actorId })
       .where(and(eq(branches.id, id), notDeleted(branches.deletedAt)))
       .returning();
     return row;
   }
 
-  /** Soft-delete: stamp `deletedAt`. Returns the id when a live row matched, else undefined. */
-  async softDelete(id: string): Promise<string | undefined> {
+  /** Soft-delete: stamp `deletedAt` + the actor. Returns the id when a live row matched, else undefined. */
+  async softDelete(id: string, actorId: string): Promise<string | undefined> {
     const [row] = await this.db
       .update(branches)
-      .set({ deletedAt: new Date().toISOString() })
+      .set({ deletedAt: new Date().toISOString(), updatedBy: actorId })
       .where(and(eq(branches.id, id), notDeleted(branches.deletedAt)))
       .returning({ id: branches.id });
     return row?.id;

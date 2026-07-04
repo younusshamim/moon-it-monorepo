@@ -4,6 +4,7 @@
 import { Module, type Provider } from "@nestjs/common";
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
 import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
+import { AuthModule } from "./auth/auth.module.js";
 import { DomainExceptionFilter } from "./common/filters/domain-exception.filter.js";
 import { LoggingInterceptor } from "./common/interceptors/logging.interceptor.js";
 import { PinoLoggerModule } from "./common/logger/logger.module.js";
@@ -28,6 +29,7 @@ const responseValidationProviders: Provider[] =
     PinoLoggerModule,
     DatabaseModule,
     RedisModule,
+    AuthModule,
     HealthModule,
     OrganizationModule,
     IamModule,
