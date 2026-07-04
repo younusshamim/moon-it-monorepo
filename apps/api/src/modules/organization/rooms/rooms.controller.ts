@@ -1,5 +1,6 @@
-// HTTP edge for rooms (`/v1/rooms`). List is filterable by `branchId`. Unprotected — guards in Phase 6.
-import type { Paginated, Room } from "@moonit/schema";
+// HTTP edge for rooms (`/v1/rooms`). List is filterable by `branchId`. `room.read`/`room.manage`
+// gate the routes (PermissionsGuard); the AuthzContext threads into the service for branch scoping.
+import { type Paginated, PERMISSIONS, type Room } from "@moonit/schema";
 import {
   Body,
   Controller,
@@ -14,6 +15,9 @@ import {
 } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
+import { Authz } from "../../../auth/authz.decorator.js";
+import type { AuthzContext } from "../../../auth/authz-context.js";
+import { RequirePermissions } from "../../../auth/require-permissions.decorator.js";
 import {
   CreateRoomDto,
   RoomDto,
@@ -29,32 +33,41 @@ export class RoomsController {
   constructor(private readonly service: RoomsService) {}
 
   @Get()
+  @RequirePermissions(PERMISSIONS.ROOM_READ)
   @ZodSerializerDto(RoomPageDto)
   list(@Query() query: RoomListQueryDto): Promise<Paginated<Room>> {
     return this.service.list(query);
   }
 
   @Get(":id")
+  @RequirePermissions(PERMISSIONS.ROOM_READ)
   @ZodSerializerDto(RoomDto)
   getById(@Param("id", ParseUUIDPipe) id: string): Promise<Room> {
     return this.service.getById(id);
   }
 
   @Post()
+  @RequirePermissions(PERMISSIONS.ROOM_MANAGE)
   @ZodSerializerDto(RoomDto)
-  create(@Body() body: CreateRoomDto): Promise<Room> {
-    return this.service.create(body);
+  create(@Body() body: CreateRoomDto, @Authz() authz: AuthzContext): Promise<Room> {
+    return this.service.create(body, authz);
   }
 
   @Patch(":id")
+  @RequirePermissions(PERMISSIONS.ROOM_MANAGE)
   @ZodSerializerDto(RoomDto)
-  update(@Param("id", ParseUUIDPipe) id: string, @Body() body: UpdateRoomDto): Promise<Room> {
-    return this.service.update(id, body);
+  update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: UpdateRoomDto,
+    @Authz() authz: AuthzContext,
+  ): Promise<Room> {
+    return this.service.update(id, body, authz);
   }
 
   @Delete(":id")
+  @RequirePermissions(PERMISSIONS.ROOM_MANAGE)
   @HttpCode(204)
-  remove(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
-    return this.service.remove(id);
+  remove(@Param("id", ParseUUIDPipe) id: string, @Authz() authz: AuthzContext): Promise<void> {
+    return this.service.remove(id, authz);
   }
 }

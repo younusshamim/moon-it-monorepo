@@ -19,8 +19,16 @@ export class LoggingInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
-    // Bind the correlation id so every log within this request carries it.
-    this.logger.assign({ correlationId: request.id });
+    // Bind the correlation id so every log within this request carries it. `assign` throws when
+    // there's no nestjs-pino request scope — which is the case for routes outside the `/v1` prefix
+    // that its context middleware is bound to (notably the unprefixed `/health` probe). The
+    // correlation id is still stamped on the auto request logs via `pinoHttp.customProps`, so a
+    // missing scope here is non-fatal enrichment, not an error worth 500-ing the request over.
+    try {
+      this.logger.assign({ correlationId: request.id });
+    } catch {
+      // Out of request scope (e.g. `/health`): skip the extra binding.
+    }
     const startedAt = Date.now();
 
     return next.handle().pipe(

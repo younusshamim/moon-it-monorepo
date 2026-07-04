@@ -14,12 +14,8 @@ import { LogOutIcon, SettingsIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { signOut } from "@/lib/auth-actions";
-
-export interface SessionUser {
-  name: string;
-  email: string;
-}
+import { useSession } from "@/components/session-provider";
+import { authClient } from "@/lib/auth/client";
 
 function initials(name: string): string {
   return name
@@ -31,14 +27,16 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function UserMenu({ user }: { user: SessionUser }) {
+export function UserMenu() {
+  const user = useSession();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleSignOut() {
     startTransition(async () => {
-      await signOut();
+      await authClient.signOut();
       router.replace("/login");
+      router.refresh();
     });
   }
 

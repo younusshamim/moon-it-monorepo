@@ -28,8 +28,23 @@ export const numericString = () =>
 /** ISO calendar date, `YYYY-MM-DD` (Postgres `date`). */
 export const isoDate = () => z.iso.date();
 
-/** ISO timestamp with timezone offset (Postgres `timestamptz`). */
-export const isoDateTime = () => z.iso.datetime({ offset: true });
+/**
+ * ISO timestamp with timezone offset (Postgres `timestamptz`).
+ *
+ * Postgres returns `timestamptz` in Drizzle `mode:"string"` as its text form (e.g.
+ * `2026-07-04 06:43:44+00` — space separator, `+00` offset), which is *not* RFC 3339 and would fail
+ * `z.iso.datetime`. We normalize any parseable timestamp string to canonical ISO-8601 (`…T…Z`) before
+ * validating, so entity responses serialize cleanly while the wire type stays a plain string.
+ */
+export const isoDateTime = () =>
+  z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? value : date.toISOString();
+    },
+    z.iso.datetime({ offset: true }),
+  );
 
 /** ISO wall-clock time, `HH:MM:SS` (Postgres `time`). */
 export const isoTime = () => z.iso.time();

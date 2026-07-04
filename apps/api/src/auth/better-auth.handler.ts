@@ -6,14 +6,26 @@
 // Fastify has already parsed the JSON body by the time the handler runs, so we re-serialise it into a
 // Fetch `Request` for `auth.handler` (the pattern from Better Auth's Fastify integration guide), and
 // forward the Fetch `Response` back, preserving every `Set-Cookie` header via `getSetCookie()`.
+import rateLimit from "@fastify/rate-limit";
 import type { Auth } from "@moonit/auth";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyInstance } from "fastify";
 
-export function registerBetterAuthHandler(fastify: FastifyInstance, auth: Auth): void {
+export async function registerBetterAuthHandler(
+  fastify: FastifyInstance,
+  auth: Auth,
+): Promise<void> {
+  // Rate-limit only the auth surface (sign-in/out) to blunt credential brute-force. `global: false`
+  // keeps the limit off the rest of the API; the per-route `config.rateLimit` below applies it.
+  await fastify.register(rateLimit, { global: false });
+
   fastify.route({
     method: ["GET", "POST"],
     url: "/api/auth/*",
+    config: {
+      // ~20 requests/min per IP across all `/api/auth/*` endpoints → 429 beyond that.
+      rateLimit: { max: 20, timeWindow: "1 minute" },
+    },
     async handler(request, reply) {
       const url = new URL(request.url, `http://${request.headers.host}`);
       const req = new Request(url, {

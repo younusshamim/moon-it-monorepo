@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Branch, UpdateBranch } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
 import { Input } from "@moonit/ui/components/input";
@@ -22,8 +23,11 @@ import {
 } from "@moonit/ui/components/sheet";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import { type DummyBranch, TIMEZONES } from "./branches-table";
+import { errorMessage } from "@/lib/api/error-message";
+import { useUpdateBranch } from "@/lib/api/mutations/branches";
+import { TIMEZONES } from "./branches-table";
 
 const schema = z.object({
   code: z
@@ -48,8 +52,10 @@ export function EditBranchDrawer({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  branch: DummyBranch | null;
+  branch: Branch | null;
 }) {
+  const updateBranch = useUpdateBranch();
+
   const {
     register,
     control,
@@ -85,10 +91,25 @@ export function EditBranchDrawer({
     }
   }, [branch, reset]);
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API
-    // console.log("Edit branch:", { branchId: branch?.id, ...data });
-    onOpenChange(false);
+  async function onSubmit(data: FormValues) {
+    if (!branch) return;
+    const input: UpdateBranch = {
+      code: data.code,
+      name: data.name,
+      timezone: data.timezone,
+      addressLine1: data.addressLine1?.trim() || null,
+      addressLine2: data.addressLine2?.trim() || null,
+      city: data.city?.trim() || null,
+      phone: data.phone?.trim() || null,
+      email: data.email?.trim() || null,
+    };
+    try {
+      await updateBranch.mutateAsync({ id: branch.id, input });
+      toast.success("Branch updated");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not update branch"));
+    }
   }
 
   return (

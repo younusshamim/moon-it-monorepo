@@ -1,5 +1,6 @@
 "use client";
 
+import { type Department, PERMISSIONS } from "@moonit/schema";
 import { Badge } from "@moonit/ui/components/badge";
 import { Button } from "@moonit/ui/components/button";
 import {
@@ -16,8 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from "@moonit/ui/components/table";
+import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useHasPermission } from "@/components/session-provider";
+import { errorMessage } from "@/lib/api/error-message";
+import { useDeleteDepartment } from "@/lib/api/mutations/departments";
+import { branchesQueryOptions } from "@/lib/api/queries/branches";
+import { departmentsQueryOptions } from "@/lib/api/queries/departments";
 import { CreateDepartmentDrawer } from "./create-department-drawer";
 import { EditDepartmentDrawer } from "./edit-department-drawer";
 
@@ -26,35 +34,35 @@ export interface DepartmentBranch {
   name: string;
 }
 
-export interface DummyDepartment {
-  id: string;
-  name: string;
-  branchId: string | null;
-  branchName: string | null;
-}
-
-export const BRANCHES: DepartmentBranch[] = [
-  { id: "b1", name: "Dhaka Main" },
-  { id: "b2", name: "Chittagong" },
-  { id: "b3", name: "Sylhet" },
-  { id: "b4", name: "Rajshahi" },
-];
-
-const DEPARTMENTS: DummyDepartment[] = [
-  { id: "d1", name: "IT", branchId: null, branchName: null },
-  { id: "d2", name: "Languages", branchId: null, branchName: null },
-  { id: "d3", name: "Diploma", branchId: "b1", branchName: "Dhaka Main" },
-  { id: "d4", name: "Admissions", branchId: "b2", branchName: "Chittagong" },
-];
-
 export function DepartmentsTable() {
-  const [editingDepartment, setEditingDepartment] = useState<DummyDepartment | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const canManage = useHasPermission()(PERMISSIONS.DEPARTMENT_MANAGE);
+
+  const branchesQuery = useQuery(branchesQueryOptions({ pageSize: 100 }));
+  const branches: DepartmentBranch[] = useMemo(
+    () => (branchesQuery.data?.data ?? []).map((b) => ({ id: b.id, name: b.name })),
+    [branchesQuery.data],
+  );
+  const branchName = useMemo(() => new Map(branches.map((b) => [b.id, b.name])), [branches]);
+
+  const { data, isLoading, isError, error } = useQuery(departmentsQueryOptions({ pageSize: 100 }));
+  const deleteDepartment = useDeleteDepartment();
+  const departments = data?.data ?? [];
+
+  function handleDelete(department: Department) {
+    deleteDepartment.mutate(department.id, {
+      onSuccess: () => toast.success(`Deleted ${department.name}`),
+      onError: (err) => toast.error(errorMessage(err, "Could not delete department")),
+    });
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{DEPARTMENTS.length} departments</p>
-        <CreateDepartmentDrawer branches={BRANCHES} />
+        <p className="text-sm text-muted-foreground">
+          {isLoading ? "Loading…" : `${departments.length} departments`}
+        </p>
+        {canManage && <CreateDepartmentDrawer branches={branches} />}
       </div>
 
       <div className="rounded-md border">
@@ -67,7 +75,21 @@ export function DepartmentsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {DEPARTMENTS.map((department) => (
+            {isError && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-sm text-destructive">
+                  {errorMessage(error, "Failed to load departments")}
+                </TableCell>
+              </TableRow>
+            )}
+            {!isError && !isLoading && departments.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                  No departments yet.
+                </TableCell>
+              </TableRow>
+            )}
+            {departments.map((department) => (
               <TableRow key={department.id}>
                 <TableCell className="font-medium text-sm">{department.name}</TableCell>
 
@@ -77,27 +99,32 @@ export function DepartmentsTable() {
                       Institute-wide
                     </Badge>
                   ) : (
-                    <span className="text-sm">{department.branchName}</span>
+                    <span className="text-sm">{branchName.get(department.branchId) ?? "—"}</span>
                   )}
                 </TableCell>
 
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingDepartment(department)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" disabled>
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canManage && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingDepartment(department)}>
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(department)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -111,7 +138,7 @@ export function DepartmentsTable() {
           if (!v) setEditingDepartment(null);
         }}
         department={editingDepartment}
-        branches={BRANCHES}
+        branches={branches}
       />
     </div>
   );

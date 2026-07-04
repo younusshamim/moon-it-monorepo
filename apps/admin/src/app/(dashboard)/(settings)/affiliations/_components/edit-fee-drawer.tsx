@@ -81,10 +81,8 @@ export function EditFeeDrawer({
     }
   }, [fee, reset]);
 
-  function onSubmit(data: FormValues) {
-    const branchId = data.branchId === ALL_BRANCHES ? null : data.branchId;
-    // TODO: call API
-    // console.log("Edit exam fee:", { feeId: fee?.id, ...data, branchId });
+  function onSubmit(_data: FormValues) {
+    // TODO: call API — the affiliations domain has no endpoint yet (not part of Phase 7 IAM/Org wiring).
     onOpenChange(false);
   }
 

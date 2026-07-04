@@ -1,5 +1,6 @@
 "use client";
 
+import { PERMISSIONS, type Role } from "@moonit/schema";
 import { Badge } from "@moonit/ui/components/badge";
 import { Button } from "@moonit/ui/components/button";
 import { Checkbox } from "@moonit/ui/components/checkbox";
@@ -11,34 +12,43 @@ import {
   TableHeader,
   TableRow,
 } from "@moonit/ui/components/table";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useHasPermission } from "@/components/session-provider";
+import { errorMessage } from "@/lib/api/error-message";
+import { useDeleteRole } from "@/lib/api/mutations/roles";
+import { permissionsQueryOptions } from "@/lib/api/queries/permissions";
+import { rolePermissionsQueryOptions, rolesQueryOptions } from "@/lib/api/queries/roles";
 import { CreateRoleDrawer } from "./create-role-drawer";
 import { EditRoleDrawer } from "./edit-role-drawer";
 
-export interface DummyRole {
-  id: string;
-  key: string;
-  name: string;
-  isSystem: boolean;
-}
+export function RolesTab() {
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const canManage = useHasPermission()(PERMISSIONS.ROLE_MANAGE);
 
-export interface DummyPermission {
-  id: string;
-  key: string;
-  description: string;
-}
+  const { data: roles = [] } = useQuery(rolesQueryOptions());
+  const { data: permissions = [] } = useQuery(permissionsQueryOptions());
+  const deleteRole = useDeleteRole();
 
-export function RolesTab({
-  roles,
-  permissions,
-  rolePermissions,
-}: {
-  roles: DummyRole[];
-  permissions: DummyPermission[];
-  rolePermissions: Record<string, string[]>;
-}) {
-  const [editingRole, setEditingRole] = useState<DummyRole | null>(null);
+  // One grant query per role for the permission matrix (bare arrays are cheap; TanStack dedupes).
+  const grantResults = useQueries({
+    queries: roles.map((role) => rolePermissionsQueryOptions(role.id)),
+  });
+  const grantsByRole = new Map<string, Set<string>>(
+    roles.map((role, index) => [
+      role.id,
+      new Set((grantResults[index]?.data ?? []).map((p) => p.id)),
+    ]),
+  );
+
+  function handleDelete(role: Role) {
+    deleteRole.mutate(role.id, {
+      onSuccess: () => toast.success(`Deleted ${role.name}`),
+      onError: (err) => toast.error(errorMessage(err, "Could not delete role")),
+    });
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -46,7 +56,7 @@ export function RolesTab({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">Roles</h3>
-          <CreateRoleDrawer permissions={permissions} />
+          {canManage && <CreateRoleDrawer permissions={permissions} />}
         </div>
         <div className="rounded-md border">
           <Table>
@@ -55,7 +65,7 @@ export function RolesTab({
                 <TableHead>Key</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="w-20" />
+                <TableHead className="w-28" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -79,14 +89,23 @@ export function RolesTab({
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      disabled={role.isSystem}
+                      disabled={role.isSystem || !canManage}
                       onClick={() => setEditingRole(role)}
                     >
                       Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      disabled={role.isSystem || !canManage}
+                      onClick={() => handleDelete(role)}
+                    >
+                      Delete
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -96,12 +115,12 @@ export function RolesTab({
         </div>
       </div>
 
-      {/* Permission matrix */}
+      {/* Permission matrix (read-only view; edit a custom role above to change grants) */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold">Permission Matrix</h3>
           <p className="text-xs text-muted-foreground">
-            System roles are read-only. Custom roles can be edited above.
+            System roles are read-only. Edit a custom role to change its grants.
           </p>
         </div>
 
@@ -133,18 +152,15 @@ export function RolesTab({
                       </span>
                     </div>
                   </td>
-                  {roles.map((role) => {
-                    const granted = rolePermissions[role.id]?.includes(permission.id) ?? false;
-                    return (
-                      <td key={role.id} className="px-4 py-3 text-center">
-                        <Checkbox
-                          checked={granted}
-                          disabled={role.isSystem}
-                          aria-label={`${role.name} — ${permission.key}`}
-                        />
-                      </td>
-                    );
-                  })}
+                  {roles.map((role) => (
+                    <td key={role.id} className="px-4 py-3 text-center">
+                      <Checkbox
+                        checked={grantsByRole.get(role.id)?.has(permission.id) ?? false}
+                        disabled
+                        aria-label={`${role.name} — ${permission.key}`}
+                      />
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -159,7 +175,7 @@ export function RolesTab({
         }}
         role={editingRole}
         permissions={permissions}
-        rolePermissions={rolePermissions}
+        grantedPermissionIds={editingRole ? [...(grantsByRole.get(editingRole.id) ?? [])] : []}
       />
     </div>
   );

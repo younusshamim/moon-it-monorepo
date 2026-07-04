@@ -22,6 +22,13 @@ const STATUS_BY_CODE: Record<DomainErrorCode, HttpStatus> = {
   VALIDATION_ERROR: HttpStatus.UNPROCESSABLE_ENTITY,
 };
 
+/** A Fastify-style error carrying its own HTTP status (e.g. @fastify/rate-limit's 429). */
+function isHttpError(error: unknown): error is Error & { statusCode: number } {
+  if (typeof error !== "object" || error === null || !("statusCode" in error)) return false;
+  const status = (error as { statusCode: unknown }).statusCode;
+  return typeof status === "number" && status >= 400 && status < 600;
+}
+
 @Catch()
 export class DomainExceptionFilter implements ExceptionFilter {
   constructor(
@@ -54,6 +61,11 @@ export class DomainExceptionFilter implements ExceptionFilter {
       } else {
         Object.assign(body, response);
       }
+    } else if (isHttpError(exception)) {
+      // Errors raised by Fastify plugins on the raw routes (e.g. @fastify/rate-limit's 429 on
+      // `/api/auth/*`) carry their own HTTP status — honor it instead of masking it as a 500.
+      status = exception.statusCode;
+      body.message = exception.message;
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       body.message = "Internal server error";

@@ -1,5 +1,7 @@
 "use client";
 
+import type { Branch } from "@moonit/schema";
+import { PERMISSIONS } from "@moonit/schema";
 import { Badge } from "@moonit/ui/components/badge";
 import { Button } from "@moonit/ui/components/button";
 import {
@@ -16,24 +18,18 @@ import {
   TableHeader,
   TableRow,
 } from "@moonit/ui/components/table";
+import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useHasPermission } from "@/components/session-provider";
+import { errorMessage } from "@/lib/api/error-message";
+import { useDeleteBranch, useUpdateBranch } from "@/lib/api/mutations/branches";
+import { branchesQueryOptions } from "@/lib/api/queries/branches";
 import { CreateBranchDrawer } from "./create-branch-drawer";
 import { EditBranchDrawer } from "./edit-branch-drawer";
 
-export interface DummyBranch {
-  id: string;
-  code: string;
-  name: string;
-  addressLine1: string | null;
-  addressLine2: string | null;
-  city: string | null;
-  phone: string | null;
-  email: string | null;
-  timezone: string;
-  isActive: boolean;
-}
-
+// Timezone options for the branch create/edit forms. Kept here so both drawers share one list.
 export const TIMEZONES = [
   { value: "Asia/Dhaka", label: "Asia/Dhaka (GMT+6)" },
   { value: "Asia/Kolkata", label: "Asia/Kolkata (GMT+5:30)" },
@@ -43,65 +39,40 @@ export const TIMEZONES = [
   { value: "Asia/Dubai", label: "Asia/Dubai (GMT+4)" },
 ];
 
-const BRANCHES: DummyBranch[] = [
-  {
-    id: "b1",
-    code: "DHK-01",
-    name: "Dhaka Main",
-    addressLine1: "House 12, Road 5, Dhanmondi",
-    addressLine2: null,
-    city: "Dhaka",
-    phone: "+8802-9611001",
-    email: "dhaka.main@moonit.example",
-    timezone: "Asia/Dhaka",
-    isActive: true,
-  },
-  {
-    id: "b2",
-    code: "CTG-01",
-    name: "Chittagong",
-    addressLine1: "GEC Circle",
-    addressLine2: null,
-    city: "Chattogram",
-    phone: "+8801700000010",
-    email: "chittagong@moonit.example",
-    timezone: "Asia/Dhaka",
-    isActive: true,
-  },
-  {
-    id: "b3",
-    code: "SYL-01",
-    name: "Sylhet",
-    addressLine1: null,
-    addressLine2: null,
-    city: "Sylhet",
-    phone: null,
-    email: "sylhet@moonit.example",
-    timezone: "Asia/Dhaka",
-    isActive: true,
-  },
-  {
-    id: "b4",
-    code: "RAJ-01",
-    name: "Rajshahi",
-    addressLine1: "Shaheb Bazar",
-    addressLine2: null,
-    city: "Rajshahi",
-    phone: "+8801700000040",
-    email: null,
-    timezone: "Asia/Dhaka",
-    isActive: false,
-  },
-];
-
 export function BranchesTable() {
-  const [editingBranch, setEditingBranch] = useState<DummyBranch | null>(null);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const canManage = useHasPermission()(PERMISSIONS.BRANCH_MANAGE);
+
+  const { data, isLoading, isError, error } = useQuery(branchesQueryOptions({ pageSize: 100 }));
+  const deleteBranch = useDeleteBranch();
+  const updateBranch = useUpdateBranch();
+
+  const branches = data?.data ?? [];
+
+  function handleDelete(branch: Branch) {
+    deleteBranch.mutate(branch.id, {
+      onSuccess: () => toast.success(`Deleted ${branch.name}`),
+      onError: (err) => toast.error(errorMessage(err, "Could not delete branch")),
+    });
+  }
+
+  function handleToggleActive(branch: Branch) {
+    updateBranch.mutate(
+      { id: branch.id, input: { isActive: !branch.isActive } },
+      {
+        onSuccess: () => toast.success(branch.isActive ? "Branch deactivated" : "Branch activated"),
+        onError: (err) => toast.error(errorMessage(err, "Could not update branch")),
+      },
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{BRANCHES.length} branches</p>
-        <CreateBranchDrawer />
+        <p className="text-sm text-muted-foreground">
+          {isLoading ? "Loading…" : `${branches.length} branches`}
+        </p>
+        {canManage && <CreateBranchDrawer />}
       </div>
 
       <div className="rounded-md border">
@@ -117,7 +88,21 @@ export function BranchesTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {BRANCHES.map((branch) => (
+            {isError && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-sm text-destructive">
+                  {errorMessage(error, "Failed to load branches")}
+                </TableCell>
+              </TableRow>
+            )}
+            {!isError && !isLoading && branches.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  No branches yet.
+                </TableCell>
+              </TableRow>
+            )}
+            {branches.map((branch) => (
               <TableRow key={branch.id}>
                 <TableCell>
                   <div className="flex flex-col gap-0.5">
@@ -153,22 +138,30 @@ export function BranchesTable() {
                 </TableCell>
 
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingBranch(branch)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        {branch.isActive ? "Deactivate" : "Activate"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canManage && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingBranch(branch)}>
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleActive(branch)}>
+                          {branch.isActive ? "Deactivate" : "Activate"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(branch)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

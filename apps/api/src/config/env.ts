@@ -17,6 +17,10 @@ const EnvSchema = z.object({
   // Public origin the API is reached at, so Better Auth builds absolute URLs and trusts the origin.
   // Optional: when unset Better Auth derives it from the incoming request (fine for local dev).
   BETTER_AUTH_URL: z.url().optional(),
+  // Comma-separated browser origins allowed to authenticate (the admin web app). The web reaches the
+  // API same-origin via a Next rewrite, which forwards the browser's `Origin`; Better Auth's CSRF
+  // check must trust it. Optional; when unset only the request-derived origin is trusted.
+  WEB_ORIGIN: z.string().optional(),
 
   // Optional observability sinks — wiring stays inert when unset.
   SENTRY_DSN: z.url().optional(),

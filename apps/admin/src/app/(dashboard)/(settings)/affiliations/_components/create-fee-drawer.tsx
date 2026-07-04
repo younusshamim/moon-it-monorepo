@@ -70,10 +70,8 @@ export function CreateFeeDrawer({
     setOpen(value);
   }
 
-  function onSubmit(data: FormValues) {
-    const _branchId = data.branchId === ALL_BRANCHES ? null : data.branchId;
-    // TODO: call API — fee will be created with isActive: true
-    // console.log("Create exam fee:", { ...data, branchId });
+  function onSubmit(_data: FormValues) {
+    // TODO: call API — the affiliations domain has no endpoint yet (not part of Phase 7 IAM/Org wiring).
     reset();
     setOpen(false);
   }

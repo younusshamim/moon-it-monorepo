@@ -16,6 +16,12 @@ export interface CreateAuthDeps {
   secret: string;
   /** Public base URL; only needed once the request handler mounts (Phase 5). */
   baseURL?: string;
+  /**
+   * Browser origins allowed to authenticate (e.g. the admin web app). The web reaches the API
+   * same-origin through a Next rewrite that forwards the browser's `Origin`, so Better Auth's CSRF
+   * check must trust those origins. Omit to trust only the request-derived origin.
+   */
+  trustedOrigins?: string[];
 }
 
 /**
@@ -28,6 +34,7 @@ export function createAuth(deps: CreateAuthDeps) {
   return betterAuth({
     secret: deps.secret,
     ...(deps.baseURL ? { baseURL: deps.baseURL } : {}),
+    ...(deps.trustedOrigins ? { trustedOrigins: deps.trustedOrigins } : {}),
     telemetry: { enabled: false },
     database: drizzleAdapter(withUserDateShim(deps.db), {
       provider: "pg",

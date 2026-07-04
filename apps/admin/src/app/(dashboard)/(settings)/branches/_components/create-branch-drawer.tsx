@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NewBranch } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
 import { Input } from "@moonit/ui/components/input";
@@ -23,7 +24,10 @@ import {
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+import { errorMessage } from "@/lib/api/error-message";
+import { useCreateBranch } from "@/lib/api/mutations/branches";
 import { TIMEZONES } from "./branches-table";
 
 const schema = z.object({
@@ -42,8 +46,22 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
+function toInput(data: FormValues): NewBranch {
+  return {
+    code: data.code,
+    name: data.name,
+    timezone: data.timezone,
+    addressLine1: data.addressLine1?.trim() || null,
+    addressLine2: data.addressLine2?.trim() || null,
+    city: data.city?.trim() || null,
+    phone: data.phone?.trim() || null,
+    email: data.email?.trim() || null,
+  };
+}
+
 export function CreateBranchDrawer() {
   const [open, setOpen] = useState(false);
+  const createBranch = useCreateBranch();
 
   const {
     register,
@@ -70,11 +88,15 @@ export function CreateBranchDrawer() {
     setOpen(value);
   }
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API — branch will be created with isActive: true
-    // console.log("Create branch:", data);
-    reset();
-    setOpen(false);
+  async function onSubmit(data: FormValues) {
+    try {
+      await createBranch.mutateAsync(toInput(data));
+      toast.success("Branch created");
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not create branch"));
+    }
   }
 
   return (

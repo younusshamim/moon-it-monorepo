@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Permission, Role, UpdateRole } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Checkbox } from "@moonit/ui/components/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
@@ -16,8 +17,10 @@ import {
 } from "@moonit/ui/components/sheet";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import type { DummyPermission, DummyRole } from "./roles-tab";
+import { errorMessage } from "@/lib/api/error-message";
+import { useReplaceRolePermissions, useUpdateRole } from "@/lib/api/mutations/roles";
 
 const schema = z.object({
   name: z.string().min(1, "Role name is required"),
@@ -30,14 +33,17 @@ export function EditRoleDrawer({
   onOpenChange,
   role,
   permissions,
-  rolePermissions,
+  grantedPermissionIds,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  role: DummyRole | null;
-  permissions: DummyPermission[];
-  rolePermissions: Record<string, string[]>;
+  role: Role | null;
+  permissions: Permission[];
+  grantedPermissionIds: string[];
 }) {
+  const updateRole = useUpdateRole();
+  const replacePermissions = useReplaceRolePermissions();
+
   const {
     register,
     handleSubmit,
@@ -56,10 +62,10 @@ export function EditRoleDrawer({
     if (role) {
       reset({
         name: role.name,
-        permissionIds: rolePermissions[role.id] ?? [],
+        permissionIds: grantedPermissionIds,
       });
     }
-  }, [role, rolePermissions, reset]);
+  }, [role, grantedPermissionIds, reset]);
 
   function togglePermission(id: string) {
     setValue(
@@ -69,10 +75,20 @@ export function EditRoleDrawer({
     );
   }
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API
-    // console.log("Edit role:", { roleId: role?.id, ...data });
-    onOpenChange(false);
+  async function onSubmit(data: FormValues) {
+    if (!role) return;
+    const input: UpdateRole = { name: data.name };
+    try {
+      await updateRole.mutateAsync({ id: role.id, input });
+      await replacePermissions.mutateAsync({
+        roleId: role.id,
+        permissionIds: data.permissionIds,
+      });
+      toast.success("Role updated");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not update role"));
+    }
   }
 
   return (

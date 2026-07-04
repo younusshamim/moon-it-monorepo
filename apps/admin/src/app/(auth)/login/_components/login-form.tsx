@@ -8,8 +8,8 @@ import { Loader2Icon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { signInWithEmail } from "@/app/(auth)/login/actions";
 import { type LoginInput, LoginSchema } from "@/app/(auth)/login/schema";
+import { authClient } from "@/lib/auth/client";
 
 export function LoginForm() {
   const router = useRouter();
@@ -26,12 +26,17 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginInput) {
-    const result = await signInWithEmail(values);
-    if (!result.ok) {
-      toast.error(result.message ?? "Could not sign in.");
+    const { error } = await authClient.signIn.email({
+      email: values.email,
+      password: values.password,
+    });
+    if (error) {
+      toast.error(error.message ?? "Invalid email or password.");
       return;
     }
+    // Land on the intended route and re-render server components with the new session cookie.
     router.replace(redirectTo);
+    router.refresh();
   }
 
   return (

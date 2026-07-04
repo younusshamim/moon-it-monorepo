@@ -2,11 +2,12 @@
 
 import { Button } from "@moonit/ui/components/button";
 import { MenuIcon } from "lucide-react";
+import { BranchSwitcher } from "@/components/branch-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { type SessionUser, UserMenu } from "@/components/user-menu";
+import { UserMenu } from "@/components/user-menu";
 import { useUiStore } from "@/stores/ui-store";
 
-export function AppTopbar({ user }: { user: SessionUser }) {
+export function AppTopbar() {
   const setMobileNavOpen = useUiStore((state) => state.setMobileNavOpen);
 
   return (
@@ -21,10 +22,12 @@ export function AppTopbar({ user }: { user: SessionUser }) {
         <span className="sr-only">Open navigation</span>
       </Button>
 
+      <BranchSwitcher />
+
       <div className="flex-1" />
 
       <ThemeToggle />
-      <UserMenu user={user} />
+      <UserMenu />
     </header>
   );
 }

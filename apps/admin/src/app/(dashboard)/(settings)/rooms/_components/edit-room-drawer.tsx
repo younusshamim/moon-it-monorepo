@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Room, UpdateRoom } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Checkbox } from "@moonit/ui/components/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
@@ -23,8 +24,11 @@ import {
 } from "@moonit/ui/components/sheet";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import type { DummyRoom, RoomBranch } from "./rooms-table";
+import { errorMessage } from "@/lib/api/error-message";
+import { useUpdateRoom } from "@/lib/api/mutations/rooms";
+import type { RoomBranch } from "./rooms-table";
 
 const schema = z.object({
   branchId: z.string().min(1, "Select a branch"),
@@ -42,9 +46,11 @@ export function EditRoomDrawer({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  room: DummyRoom | null;
+  room: Room | null;
   branches: RoomBranch[];
 }) {
+  const updateRoom = useUpdateRoom();
+
   const {
     register,
     control,
@@ -67,10 +73,21 @@ export function EditRoomDrawer({
     }
   }, [room, reset]);
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API
-    // console.log("Edit room:", { roomId: room?.id, ...data });
-    onOpenChange(false);
+  async function onSubmit(data: FormValues) {
+    if (!room) return;
+    const input: UpdateRoom = {
+      branchId: data.branchId,
+      name: data.name,
+      capacity: data.capacity,
+      hasComputers: data.hasComputers,
+    };
+    try {
+      await updateRoom.mutateAsync({ id: room.id, input });
+      toast.success("Room updated");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not update room"));
+    }
   }
 
   return (

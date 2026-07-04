@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NewUser } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
 import { Input } from "@moonit/ui/components/input";
@@ -16,7 +17,10 @@ import {
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+import { errorMessage } from "@/lib/api/error-message";
+import { useCreateUser } from "@/lib/api/mutations/users";
 
 const schema = z.object({
   fullName: z.string().min(1, "Full name is required"),
@@ -27,6 +31,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function InviteUserDrawer() {
   const [open, setOpen] = useState(false);
+  const createUser = useCreateUser();
 
   const {
     register,
@@ -43,11 +48,20 @@ export function InviteUserDrawer() {
     setOpen(value);
   }
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API — user will be created with status "invited"
-    // console.log("Invite user:", data);
-    reset();
-    setOpen(false);
+  async function onSubmit(data: FormValues) {
+    const input: NewUser = {
+      email: data.email,
+      fullName: data.fullName,
+      phone: data.phone?.trim() || null,
+    };
+    try {
+      await createUser.mutateAsync(input);
+      toast.success("Invitation sent");
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not invite user"));
+    }
   }
 
   return (

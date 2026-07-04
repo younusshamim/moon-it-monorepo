@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NewRoom } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Checkbox } from "@moonit/ui/components/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
@@ -24,7 +25,10 @@ import {
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+import { errorMessage } from "@/lib/api/error-message";
+import { useCreateRoom } from "@/lib/api/mutations/rooms";
 import type { RoomBranch } from "./rooms-table";
 
 const schema = z.object({
@@ -37,6 +41,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function CreateRoomDrawer({ branches }: { branches: RoomBranch[] }) {
   const [open, setOpen] = useState(false);
+  const createRoom = useCreateRoom();
 
   const {
     register,
@@ -54,11 +59,21 @@ export function CreateRoomDrawer({ branches }: { branches: RoomBranch[] }) {
     setOpen(value);
   }
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API — room will be created with isActive: true
-    // console.log("Create room:", data);
-    reset();
-    setOpen(false);
+  async function onSubmit(data: FormValues) {
+    const input: NewRoom = {
+      branchId: data.branchId,
+      name: data.name,
+      capacity: data.capacity,
+      hasComputers: data.hasComputers,
+    };
+    try {
+      await createRoom.mutateAsync(input);
+      toast.success("Room created");
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not create room"));
+    }
   }
 
   return (

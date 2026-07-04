@@ -2,8 +2,9 @@
 // an unknown role/branch (FK violation) maps to ValidationError; unassigning a missing row is a 404.
 // See docs/API_AND_AUTH_PLAN.md, Phase 2.
 import { ConflictError, NotFoundError, ValidationError } from "@moonit/core";
-import type { UserRole } from "@moonit/schema";
+import { PERMISSIONS, type UserRole } from "@moonit/schema";
 import { Injectable } from "@nestjs/common";
+import type { AuthzContext } from "../../../auth/authz-context.js";
 import { UserRolesRepository } from "./user-roles.repository.js";
 import { UsersService } from "./users.service.js";
 
@@ -25,7 +26,11 @@ export class UserRolesService {
   async assign(
     userId: string,
     input: { roleId: string; branchId?: string | null | undefined },
+    authz: AuthzContext,
   ): Promise<UserRole> {
+    // A branch-scoped admin may only assign within a branch they manage; a null (all-branch)
+    // assignment requires all-branch scope (super_admin).
+    authz.assertBranch(PERMISSIONS.USER_MANAGE, input.branchId ?? null);
     await this.users.getById(userId); // 404 if the user is unknown
     try {
       return await this.repository.create({

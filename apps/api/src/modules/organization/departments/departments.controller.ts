@@ -1,5 +1,6 @@
-// HTTP edge for departments (`/v1/departments`). List is filterable by `branchId`. Unprotected — Phase 6.
-import type { Department, Paginated } from "@moonit/schema";
+// HTTP edge for departments (`/v1/departments`). List is filterable by `branchId`.
+// `department.read`/`department.manage` gate the routes; the AuthzContext threads in for branch scoping.
+import { type Department, type Paginated, PERMISSIONS } from "@moonit/schema";
 import {
   Body,
   Controller,
@@ -14,6 +15,9 @@ import {
 } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
+import { Authz } from "../../../auth/authz.decorator.js";
+import type { AuthzContext } from "../../../auth/authz-context.js";
+import { RequirePermissions } from "../../../auth/require-permissions.decorator.js";
 import { DepartmentsService } from "./departments.service.js";
 import {
   CreateDepartmentDto,
@@ -29,35 +33,41 @@ export class DepartmentsController {
   constructor(private readonly service: DepartmentsService) {}
 
   @Get()
+  @RequirePermissions(PERMISSIONS.DEPARTMENT_READ)
   @ZodSerializerDto(DepartmentPageDto)
   list(@Query() query: DepartmentListQueryDto): Promise<Paginated<Department>> {
     return this.service.list(query);
   }
 
   @Get(":id")
+  @RequirePermissions(PERMISSIONS.DEPARTMENT_READ)
   @ZodSerializerDto(DepartmentDto)
   getById(@Param("id", ParseUUIDPipe) id: string): Promise<Department> {
     return this.service.getById(id);
   }
 
   @Post()
+  @RequirePermissions(PERMISSIONS.DEPARTMENT_MANAGE)
   @ZodSerializerDto(DepartmentDto)
-  create(@Body() body: CreateDepartmentDto): Promise<Department> {
-    return this.service.create(body);
+  create(@Body() body: CreateDepartmentDto, @Authz() authz: AuthzContext): Promise<Department> {
+    return this.service.create(body, authz);
   }
 
   @Patch(":id")
+  @RequirePermissions(PERMISSIONS.DEPARTMENT_MANAGE)
   @ZodSerializerDto(DepartmentDto)
   update(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() body: UpdateDepartmentDto,
+    @Authz() authz: AuthzContext,
   ): Promise<Department> {
-    return this.service.update(id, body);
+    return this.service.update(id, body, authz);
   }
 
   @Delete(":id")
+  @RequirePermissions(PERMISSIONS.DEPARTMENT_MANAGE)
   @HttpCode(204)
-  remove(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
-    return this.service.remove(id);
+  remove(@Param("id", ParseUUIDPipe) id: string, @Authz() authz: AuthzContext): Promise<void> {
+    return this.service.remove(id, authz);
   }
 }

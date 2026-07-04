@@ -49,6 +49,13 @@ async function bootstrap(): Promise<void> {
     .setTitle("Moon IT API")
     .setDescription("Moon IT admin platform API")
     .setVersion("0.0.0")
+    // The API authenticates via the Better Auth session cookie (issued by `/api/auth/sign-in/email`).
+    // Declaring it here surfaces the scheme in Swagger; `@ApiCookieAuth()` marks protected routes.
+    .addCookieAuth("better-auth.session_token", {
+      type: "apiKey",
+      in: "cookie",
+      name: "better-auth.session_token",
+    })
     .build();
   const document = SwaggerModule.createDocument(app, openApiConfig);
   SwaggerModule.setup("docs", app, cleanupOpenApiDoc(document));

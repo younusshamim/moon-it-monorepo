@@ -9,14 +9,17 @@
 //     from `./server-fetch` (server-only) — it delegates here with the cookie header + internal URL.
 import type { ZodType } from "zod";
 import { ApiError } from "@/lib/api/api-error";
-import { clientEnv } from "@/lib/env.client";
 
 export interface ApiFetchOptions<TOutput> extends Omit<RequestInit, "body"> {
   /** Zod schema the JSON response is parsed with. Omit for endpoints with no response body. */
   schema?: ZodType<TOutput>;
   /** Request body — plain objects are JSON-serialized automatically. */
   body?: unknown;
-  /** Override the API base URL (server reads target the internal `API_URL`). Defaults to the public URL. */
+  /**
+   * Override the API base URL. Defaults to `""` (same-origin): the browser calls `/v1/*` on the admin
+   * origin and Next rewrites proxy it to the API (see next.config.ts), so no CORS and the session
+   * cookie flows automatically. `serverApiFetch` overrides this with the internal `API_URL`.
+   */
   baseUrl?: string;
   /** Next.js fetch cache/revalidation options. */
   next?: { revalidate?: number | false; tags?: string[] };
@@ -26,7 +29,7 @@ export async function apiFetch<TOutput = unknown>(
   path: string,
   options: ApiFetchOptions<TOutput> = {},
 ): Promise<TOutput> {
-  const { schema, body, baseUrl = clientEnv.NEXT_PUBLIC_API_URL, next, ...init } = options;
+  const { schema, body, baseUrl = "", next, ...init } = options;
 
   const headers = new Headers(init.headers);
   if (body !== undefined && !(body instanceof FormData)) {

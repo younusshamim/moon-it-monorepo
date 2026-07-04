@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NewRole, Permission } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Checkbox } from "@moonit/ui/components/checkbox";
 import {
@@ -23,8 +24,10 @@ import {
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import type { DummyPermission } from "./roles-tab";
+import { errorMessage } from "@/lib/api/error-message";
+import { useCreateRole, useReplaceRolePermissions } from "@/lib/api/mutations/roles";
 
 const schema = z.object({
   key: z
@@ -36,8 +39,10 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-export function CreateRoleDrawer({ permissions }: { permissions: DummyPermission[] }) {
+export function CreateRoleDrawer({ permissions }: { permissions: Permission[] }) {
   const [open, setOpen] = useState(false);
+  const createRole = useCreateRole();
+  const replacePermissions = useReplaceRolePermissions();
 
   const {
     register,
@@ -66,11 +71,22 @@ export function CreateRoleDrawer({ permissions }: { permissions: DummyPermission
     );
   }
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API — role will be created with isSystem: false
-    // console.log("Create role:", data);
-    reset();
-    setOpen(false);
+  async function onSubmit(data: FormValues) {
+    const input: NewRole = { key: data.key, name: data.name };
+    try {
+      const role = await createRole.mutateAsync(input);
+      if (data.permissionIds.length > 0) {
+        await replacePermissions.mutateAsync({
+          roleId: role.id,
+          permissionIds: data.permissionIds,
+        });
+      }
+      toast.success("Role created");
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not create role"));
+    }
   }
 
   return (

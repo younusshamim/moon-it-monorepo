@@ -3,6 +3,7 @@
 // scope (from `user_roles`). Effective *permissions* (the role→permission catalog) are resolved by the
 // Phase 6 PermissionsGuard; this is the identity + scope those checks build on.
 import type { FastifyRequest } from "fastify";
+import type { AuthzContext } from "./authz-context.js";
 
 /** One role assignment: the role key and the branch it applies to (`null` = all branches). */
 export interface SessionRole {
@@ -18,5 +19,11 @@ export interface SessionUser {
   roles: SessionRole[];
 }
 
-/** A Fastify request after AuthGuard has attached the principal (absent on `@Public()` routes). */
-export type AuthenticatedRequest = FastifyRequest & { user?: SessionUser };
+/**
+ * A Fastify request after the auth guards run. `user` is attached by AuthGuard (absent on `@Public()`
+ * routes); `authz` is attached by PermissionsGuard on routes carrying `@RequirePermissions`.
+ */
+export type AuthenticatedRequest = FastifyRequest & {
+  user?: SessionUser;
+  authz?: AuthzContext;
+};

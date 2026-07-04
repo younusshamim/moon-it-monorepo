@@ -22,13 +22,10 @@ import {
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-
-const BRANCHES = [
-  { id: "b1", name: "Dhaka Main" },
-  { id: "b2", name: "Chittagong" },
-  { id: "b3", name: "Sylhet" },
-];
+import { errorMessage } from "@/lib/api/error-message";
+import { useAssignRole } from "@/lib/api/mutations/users";
 
 const ALL_BRANCHES = "__all__";
 
@@ -50,14 +47,22 @@ export interface AssignableRole {
   name: string;
 }
 
+export interface AssignableBranch {
+  id: string;
+  name: string;
+}
+
 export function AssignRoleDrawer({
   users,
   roles,
+  branches,
 }: {
   users: AssignableUser[];
   roles: AssignableRole[];
+  branches: AssignableBranch[];
 }) {
   const [open, setOpen] = useState(false);
+  const assignRole = useAssignRole();
 
   const {
     control,
@@ -74,12 +79,16 @@ export function AssignRoleDrawer({
     setOpen(value);
   }
 
-  function onSubmit(data: FormValues) {
+  async function onSubmit(data: FormValues) {
     const branchId = data.branchId === ALL_BRANCHES ? null : data.branchId;
-    // TODO: call API
-    // console.log("Assign role:", { ...data, branchId });
-    reset();
-    setOpen(false);
+    try {
+      await assignRole.mutateAsync({ userId: data.userId, roleId: data.roleId, branchId });
+      toast.success("Role assigned");
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not assign role"));
+    }
   }
 
   return (
@@ -164,7 +173,7 @@ export function AssignRoleDrawer({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ALL_BRANCHES}>All Branches</SelectItem>
-                        {BRANCHES.map((b) => (
+                        {branches.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
                             {b.name}
                           </SelectItem>

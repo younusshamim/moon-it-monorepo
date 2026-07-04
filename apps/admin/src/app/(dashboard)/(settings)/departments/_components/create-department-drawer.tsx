@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NewDepartment } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
 import { Input } from "@moonit/ui/components/input";
@@ -23,7 +24,10 @@ import {
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+import { errorMessage } from "@/lib/api/error-message";
+import { useCreateDepartment } from "@/lib/api/mutations/departments";
 import type { DepartmentBranch } from "./departments-table";
 
 export const INSTITUTE_WIDE = "__institute_wide__";
@@ -36,6 +40,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function CreateDepartmentDrawer({ branches }: { branches: DepartmentBranch[] }) {
   const [open, setOpen] = useState(false);
+  const createDepartment = useCreateDepartment();
 
   const {
     register,
@@ -53,12 +58,19 @@ export function CreateDepartmentDrawer({ branches }: { branches: DepartmentBranc
     setOpen(value);
   }
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API — department will be created with branchId, mapping
-    // INSTITUTE_WIDE to null
-    // console.log("Create department:", data);
-    reset();
-    setOpen(false);
+  async function onSubmit(data: FormValues) {
+    const input: NewDepartment = {
+      name: data.name,
+      branchId: data.branchId === INSTITUTE_WIDE ? null : data.branchId,
+    };
+    try {
+      await createDepartment.mutateAsync(input);
+      toast.success("Department created");
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not create department"));
+    }
   }
 
   return (

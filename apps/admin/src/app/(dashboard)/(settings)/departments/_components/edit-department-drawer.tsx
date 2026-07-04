@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Department, UpdateDepartment } from "@moonit/schema";
 import { Button } from "@moonit/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@moonit/ui/components/field";
 import { Input } from "@moonit/ui/components/input";
@@ -22,9 +23,12 @@ import {
 } from "@moonit/ui/components/sheet";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+import { errorMessage } from "@/lib/api/error-message";
+import { useUpdateDepartment } from "@/lib/api/mutations/departments";
 import { INSTITUTE_WIDE } from "./create-department-drawer";
-import type { DepartmentBranch, DummyDepartment } from "./departments-table";
+import type { DepartmentBranch } from "./departments-table";
 
 const schema = z.object({
   name: z.string().min(1, "Department name is required").max(120),
@@ -40,9 +44,11 @@ export function EditDepartmentDrawer({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  department: DummyDepartment | null;
+  department: Department | null;
   branches: DepartmentBranch[];
 }) {
+  const updateDepartment = useUpdateDepartment();
+
   const {
     register,
     control,
@@ -63,10 +69,19 @@ export function EditDepartmentDrawer({
     }
   }, [department, reset]);
 
-  function onSubmit(_data: FormValues) {
-    // TODO: call API — mapping INSTITUTE_WIDE to null for branchId
-    // console.log("Edit department:", { departmentId: department?.id, ...data });
-    onOpenChange(false);
+  async function onSubmit(data: FormValues) {
+    if (!department) return;
+    const input: UpdateDepartment = {
+      name: data.name,
+      branchId: data.branchId === INSTITUTE_WIDE ? null : data.branchId,
+    };
+    try {
+      await updateDepartment.mutateAsync({ id: department.id, input });
+      toast.success("Department updated");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not update department"));
+    }
   }
 
   return (

@@ -7,6 +7,7 @@
 
 export * from "./affiliation/schema.js"; // affiliation bodies, exam fees/events, registrations
 export * from "./assessment/schema.js"; // exams, grades, certificates
+export * from "./auth/session.js"; // the /v1/me principal: identity + roles + permissions + branch scope
 export * from "./catalog/schema.js"; // courses, curriculum, per-branch offerings
 export * from "./crm/schema.js"; // leads, lead activity
 export * from "./enrollment/schema.js"; // enrollments, attendance
