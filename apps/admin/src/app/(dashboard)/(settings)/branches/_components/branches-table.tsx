@@ -29,16 +29,6 @@ import { branchesQueryOptions } from "@/lib/api/queries/branches";
 import { CreateBranchDrawer } from "./create-branch-drawer";
 import { EditBranchDrawer } from "./edit-branch-drawer";
 
-// Timezone options for the branch create/edit forms. Kept here so both drawers share one list.
-export const TIMEZONES = [
-  { value: "Asia/Dhaka", label: "Asia/Dhaka (GMT+6)" },
-  { value: "Asia/Kolkata", label: "Asia/Kolkata (GMT+5:30)" },
-  { value: "Asia/Kathmandu", label: "Asia/Kathmandu (GMT+5:45)" },
-  { value: "Asia/Yangon", label: "Asia/Yangon (GMT+6:30)" },
-  { value: "Asia/Bangkok", label: "Asia/Bangkok (GMT+7)" },
-  { value: "Asia/Dubai", label: "Asia/Dubai (GMT+4)" },
-];
-
 export function BranchesTable() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const canManage = useHasPermission()(PERMISSIONS.BRANCH_MANAGE);
@@ -52,7 +42,6 @@ export function BranchesTable() {
   function handleDelete(branch: Branch) {
     deleteBranch.mutate(branch.id, {
       onSuccess: () => toast.success(`Deleted ${branch.name}`),
-      onError: (err) => toast.error(errorMessage(err, "Could not delete branch")),
     });
   }
 
@@ -61,7 +50,6 @@ export function BranchesTable() {
       { id: branch.id, input: { isActive: !branch.isActive } },
       {
         onSuccess: () => toast.success(branch.isActive ? "Branch deactivated" : "Branch activated"),
-        onError: (err) => toast.error(errorMessage(err, "Could not update branch")),
       },
     );
   }
