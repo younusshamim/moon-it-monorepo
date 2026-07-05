@@ -19,7 +19,6 @@ export default function LoginPage() {
         <CardDescription>Enter your email and password to continue.</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* useSearchParams (redirectTo) requires a Suspense boundary. */}
         <Suspense>
           <LoginForm />
         </Suspense>

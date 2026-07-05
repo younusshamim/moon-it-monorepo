@@ -34,7 +34,6 @@ export function LoginForm() {
       toast.error(error.message ?? "Invalid email or password.");
       return;
     }
-    // Land on the intended route and re-render server components with the new session cookie.
     router.replace(redirectTo);
     router.refresh();
   }
@@ -48,7 +47,7 @@ export function LoginForm() {
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="you@moonit.example"
+            placeholder="admin@moonitfeni.com"
             aria-invalid={errors.email ? true : undefined}
             {...register("email")}
           />
