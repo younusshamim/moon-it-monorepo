@@ -17,6 +17,8 @@ type DbConnection = ReturnType<typeof createDbClient>;
     {
       provide: DB_CONNECTION,
       inject: [ENV],
+      // Production pool sizing (`max` relative to Postgres `max_connections` shared across API +
+      // workers + drizzle-kit) and `idleTimeout`/`connectTimeout` overrides belong here.
       useFactory: (env: Env): DbConnection => createDbClient(env.DATABASE_URL),
     },
     {

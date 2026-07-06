@@ -1,5 +1,3 @@
-// Drizzle ↔ Zod drift enforcement (INFRASTRUCTURE.md §4, architecture-review doc-03 F4).
-//
 // @moonit/schema is the *authored* source of truth for every wire contract; the Drizzle tables here
 // are hand-written peers that "must conform". This file turns that rule from a comment into a
 // compiler check: for each entity it asserts that the Drizzle select-row type is *identical* to the

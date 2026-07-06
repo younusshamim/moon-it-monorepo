@@ -1,5 +1,16 @@
 // Domain 9 (HR/Staff) — employees and instructors. Peer of @moonit/schema/hr.
-import { date, index, jsonb, numeric, pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  date,
+  index,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { users } from "./iam.js";
 import { branches } from "./organization.js";
 import { id, timestamps } from "./shared.js";
@@ -14,7 +25,7 @@ export const employees = pgTable(
     branchId: uuid()
       .references(() => branches.id)
       .notNull(),
-    employeeCode: varchar({ length: 24 }).notNull().unique(),
+    employeeCode: varchar({ length: 24 }).notNull(),
     fullName: varchar({ length: 160 }).notNull(),
     designation: varchar({ length: 80 }),
     phone: varchar({ length: 32 }),
@@ -22,7 +33,15 @@ export const employees = pgTable(
     joinedAt: date(),
     ...timestamps(),
   },
-  (t) => [index().on(t.userId), index().on(t.branchId), index().on(t.createdAt)],
+  (t) => [
+    // A soft-deleted employee shouldn't permanently block reusing their employee code.
+    uniqueIndex("employees_employeeCode_live_uq")
+      .on(t.employeeCode)
+      .where(sql`${t.deletedAt} IS NULL`),
+    index().on(t.userId),
+    index().on(t.branchId),
+    index().on(t.createdAt),
+  ],
 );
 
 export const instructors = pgTable(

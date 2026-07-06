@@ -1,4 +1,5 @@
 // Domain 3 — Catalog: courses, curriculum, per-branch offerings. Peer of @moonit/schema/catalog.
+import { sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -9,6 +10,7 @@ import {
   pgTable,
   text,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -25,9 +27,9 @@ export const courses = pgTable(
     id: id(),
     departmentId: uuid().references(() => departments.id),
     type: programType().notNull(),
-    code: varchar({ length: 24 }).notNull().unique(), // "WEB-101", "IELTS-A"
+    code: varchar({ length: 24 }).notNull(), // "WEB-101", "IELTS-A"
     title: varchar({ length: 200 }).notNull(),
-    slug: varchar({ length: 220 }).notNull().unique(),
+    slug: varchar({ length: 220 }).notNull(),
     description: text(),
     durationWeeks: integer(), // short courses
     durationMonths: integer(), // diplomas (e.g. 12)
@@ -39,7 +41,14 @@ export const courses = pgTable(
     isPublished: boolean().default(false).notNull(),
     ...timestamps(),
   },
-  (t) => [index().on(t.departmentId), index().on(t.affiliationBodyId), index().on(t.createdAt)],
+  (t) => [
+    // A soft-deleted course shouldn't permanently block reusing its code/slug.
+    uniqueIndex("courses_code_live_uq").on(t.code).where(sql`${t.deletedAt} IS NULL`),
+    uniqueIndex("courses_slug_live_uq").on(t.slug).where(sql`${t.deletedAt} IS NULL`),
+    index().on(t.departmentId),
+    index().on(t.affiliationBodyId),
+    index().on(t.createdAt),
+  ],
 );
 
 export const courseModules = pgTable(

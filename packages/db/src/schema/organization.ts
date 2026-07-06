@@ -1,21 +1,29 @@
 // Domain 2 — Organization: branches, rooms, departments. Peer of @moonit/schema/organization.
-import { boolean, index, integer, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, index, integer, pgTable, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 import { audit, id, timestamps } from "./shared.js";
 
-export const branches = pgTable("branches", {
-  id: id(),
-  code: varchar({ length: 16 }).notNull().unique(), // "DHK-01"
-  name: varchar({ length: 160 }).notNull(),
-  addressLine1: varchar({ length: 240 }),
-  addressLine2: varchar({ length: 240 }),
-  city: varchar({ length: 80 }),
-  phone: varchar({ length: 32 }),
-  email: varchar({ length: 160 }),
-  timezone: varchar({ length: 64 }).default("Asia/Dhaka").notNull(),
-  isActive: boolean().default(true).notNull(),
-  ...timestamps(),
-  ...audit(),
-});
+export const branches = pgTable(
+  "branches",
+  {
+    id: id(),
+    code: varchar({ length: 16 }).notNull(), // "DHK-01"
+    name: varchar({ length: 160 }).notNull(),
+    addressLine1: varchar({ length: 240 }),
+    addressLine2: varchar({ length: 240 }),
+    city: varchar({ length: 80 }),
+    phone: varchar({ length: 32 }),
+    email: varchar({ length: 160 }),
+    timezone: varchar({ length: 64 }).default("Asia/Dhaka").notNull(),
+    isActive: boolean().default(true).notNull(),
+    ...timestamps(),
+    ...audit(),
+  },
+  (t) => [
+    // A soft-deleted branch shouldn't permanently block reusing its code.
+    uniqueIndex("branches_code_live_uq").on(t.code).where(sql`${t.deletedAt} IS NULL`),
+  ],
+);
 
 export const rooms = pgTable(
   "rooms",

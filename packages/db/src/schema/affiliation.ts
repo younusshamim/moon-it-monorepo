@@ -1,5 +1,6 @@
 // Domain 6 — Affiliation: bodies, exam fees, exam events, registrations. Peer of
 // @moonit/schema/affiliation.
+import { sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -8,6 +9,7 @@ import {
   pgEnum,
   pgTable,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -21,13 +23,18 @@ export const affiliationBodies = pgTable(
   "affiliation_bodies",
   {
     id: id(),
-    code: varchar({ length: 24 }).notNull().unique(), // "BTEB", "NSDA"
+    code: varchar({ length: 24 }).notNull(), // "BTEB", "NSDA"
     name: varchar({ length: 200 }).notNull(),
     website: varchar({ length: 240 }),
     isActive: boolean().default(true).notNull(),
     ...timestamps(),
   },
-  (t) => [index().on(t.createdAt)],
+  (t) => [
+    // Same reusable-code pattern as branches.code/courses.code: a soft-deleted body shouldn't
+    // permanently block reusing its code.
+    uniqueIndex("affiliationBodies_code_live_uq").on(t.code).where(sql`${t.deletedAt} IS NULL`),
+    index().on(t.createdAt),
+  ],
 );
 
 export const govtExamFees = pgTable(

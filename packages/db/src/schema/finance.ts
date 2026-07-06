@@ -1,5 +1,6 @@
 // Domain 8 — Finance: invoices, lines, installments, payments, allocations, discounts, refunds.
 // Peer of @moonit/schema/finance.
+import { sql } from "drizzle-orm";
 import {
   date,
   index,
@@ -8,6 +9,7 @@ import {
   pgEnum,
   pgTable,
   text,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -40,9 +42,7 @@ export const invoices = pgTable(
     invoiceNumber: varchar({ length: 32 }).notNull().unique(),
     status: invoiceStatus().default("draft").notNull(),
     purpose: invoicePurpose().default("course_fee").notNull(),
-    govtRegistrationId: uuid()
-      .references(() => govtExamRegistrations.id)
-      .unique(),
+    govtRegistrationId: uuid().references(() => govtExamRegistrations.id),
     discountId: uuid().references(() => discounts.id), // which discount produced discountTotal
     currency: varchar({ length: 3 }).default("BDT").notNull(),
     subtotal: numeric({ precision: 12, scale: 2 }).notNull(),
@@ -56,6 +56,11 @@ export const invoices = pgTable(
     ...audit(),
   },
   (t) => [
+    // 1:1 relational constraint, not a legal identifier like invoiceNumber: a soft-deleted invoice
+    // shouldn't permanently block a replacement invoice for the same govt exam registration.
+    uniqueIndex("invoices_govtRegistrationId_live_uq")
+      .on(t.govtRegistrationId)
+      .where(sql`${t.deletedAt} IS NULL`),
     index().on(t.branchId),
     index().on(t.studentId),
     index().on(t.enrollmentId),

@@ -43,6 +43,13 @@
       "when": 1783074190771,
       "tag": "0005_drop_user_password_and_verified_at",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783341907673,
+      "tag": "0006_steep_blue_shield",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
 // Domain 1 — Identity & Access (RBAC). Peer of @moonit/schema/iam.
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -6,6 +7,7 @@ import {
   pgTable,
   primaryKey,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -21,15 +23,20 @@ export const users = pgTable(
   "users",
   {
     id: id(),
-    email: varchar({ length: 160 }).notNull().unique(),
-    phone: varchar({ length: 32 }).unique(),
+    email: varchar({ length: 160 }).notNull(),
+    phone: varchar({ length: 32 }),
     fullName: varchar({ length: 160 }).notNull(),
     status: userStatus().default("invited").notNull(),
     emailVerified: boolean().default(false).notNull(),
     image: varchar({ length: 255 }),
     ...timestamps(),
   },
-  (t) => [index().on(t.createdAt)],
+  (t) => [
+    // Soft-deleted users must not permanently block their email/phone from re-registration.
+    uniqueIndex("users_email_live_uq").on(t.email).where(sql`${t.deletedAt} IS NULL`),
+    uniqueIndex("users_phone_live_uq").on(t.phone).where(sql`${t.deletedAt} IS NULL`),
+    index().on(t.createdAt),
+  ],
 );
 
 export const roles = pgTable("roles", {

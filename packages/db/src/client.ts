@@ -10,6 +10,10 @@ export type DbSchema = typeof schema;
 export interface DbClientOptions {
   /** postgres.js pool size. Default 10. */
   max?: number;
+  /** Seconds an idle connection stays open before closing. Default 30. */
+  idleTimeout?: number;
+  /** Seconds to wait for a new connection before failing. Default 10. */
+  connectTimeout?: number;
   /** Pass an existing postgres.js client (e.g. a Testcontainers connection) instead of a DSN. */
   client?: postgres.Sql;
 }
@@ -19,7 +23,13 @@ export interface DbClientOptions {
  * `casing: "snake_case"` mirrors the schema so queries map camelCase ↔ snake_case automatically.
  */
 export function createDbClient(connectionString: string, options: DbClientOptions = {}) {
-  const client = options.client ?? postgres(connectionString, { max: options.max ?? 10 });
+  const client =
+    options.client ??
+    postgres(connectionString, {
+      max: options.max ?? 10,
+      idle_timeout: options.idleTimeout ?? 30,
+      connect_timeout: options.connectTimeout ?? 10,
+    });
   const db = drizzle(client, { schema, casing: "snake_case" });
   return { db, client };
 }
