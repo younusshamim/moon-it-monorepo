@@ -29,6 +29,26 @@ export interface CreateAuthDeps {
  * (`shared.id()` → `defaultRandom()`), so `generateId: false` defers to the DB and reads back via
  * `.returning()`. The Drizzle client already sets `casing: "snake_case"`, so the camelCase schema
  * property keys drive column translation — only `name → fullName` needs an explicit field remap.
+ *
+ * CSRF / cookie posture (verified against the installed Better Auth v1.6.23 docs, 2026-07-06):
+ * - No `advanced.cookies`/`useSecureCookies` override here — Better Auth's own defaults already do
+ *   the right thing: the session cookie is `httpOnly`, `sameSite: "lax"`, and gets `secure` (plus the
+ *   `__Secure-` name prefix) automatically whenever `baseURL` is an `https:` URL. In prod that means
+ *   setting `BETTER_AUTH_URL` to an https origin is what turns `secure` on — nothing to configure here.
+ *   Local dev's http `baseURL` intentionally omits `secure`; that's expected, not a gap.
+ * - `advanced.disableCSRFCheck` / `disableOriginCheck` are left at their defaults (both `false`, i.e.
+ *   the checks are ON), so Better Auth's own origin-allowlist check (against `trustedOrigins`) already
+ *   protects every `/api/auth/*` endpoint. Nothing to add.
+ * - The hand-rolled `/v1/*` mutations (outside Better Auth's handler, see `apps/api`'s
+ *   `DomainExceptionFilter`/Zod pipeline) are NOT covered by the above, but are effectively CSRF-safe
+ *   for a simpler reason, confirmed empirically (2026-07-06, local `curl`): Nest's global `AuthGuard`
+ *   runs before the `ZodValidationPipe`, so ANY request without a valid session cookie gets a 401
+ *   before its body/content-type is even inspected — and `SameSite=Lax` means a cross-site request
+ *   (form POST, `<img>`, etc.) never attaches that cookie in the first place, so it's indistinguishable
+ *   from an anonymous request. The content-type check is a secondary layer for an *authenticated*
+ *   same-site caller sending a malformed body, not the CSRF boundary itself.
+ *   This is this app's own design decision, not something the Better Auth docs vouch for — revisit if
+ *   `/v1/*` ever needs to accept non-JSON bodies or gets exposed to a non-same-origin caller.
  */
 export function createAuth(deps: CreateAuthDeps) {
   return betterAuth({

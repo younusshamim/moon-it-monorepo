@@ -12,7 +12,7 @@ const EnvSchema = z.object({
   // Required secrets / connections.
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
-  ANTHROPIC_API_KEY: z.string().min(1),
+  // ANTHROPIC_API_KEY: z.string().min(1),
   BETTER_AUTH_SECRET: z.string().min(32),
   // Public origin the API is reached at, so Better Auth builds absolute URLs and trusts the origin.
   // Optional: when unset Better Auth derives it from the incoming request (fine for local dev).

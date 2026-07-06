@@ -5,15 +5,18 @@ import "reflect-metadata";
 import "./instrument.js";
 
 import type { IncomingMessage } from "node:http";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import { generateCorrelationId } from "@moonit/core";
-import { RequestMethod } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { SwaggerModule } from "@nestjs/swagger";
 import { Logger } from "nestjs-pino";
 import { cleanupOpenApiDoc } from "nestjs-zod";
 import { AppModule } from "./app.module.js";
 import { env } from "./config/env.js";
+import { applyGlobalPrefix } from "./global-prefix.js";
+import { createOpenApiDocument } from "./openapi.js";
 import { startTracing } from "./tracing.js";
 
 async function bootstrap(): Promise<void> {
@@ -26,17 +29,31 @@ async function bootstrap(): Promise<void> {
       (req.headers["x-correlation-id"] as string | undefined) ?? generateCorrelationId(),
   });
 
+  // Security headers and the app-wide rate limit must be registered on the raw Fastify instance
+  // *before* `NestFactory.create()`: `AuthModule.onModuleInit()` mounts `/api/auth/*` during that
+  // call (see `auth.module.ts`), and `@fastify/rate-limit`'s per-route `config.rateLimit` override
+  // only takes effect on routes added after its `onRoute` hook is registered.
+  const fastify = adapter.getInstance();
+  // CSP is disabled globally because Swagger UI at `/docs` needs inline scripts; every other
+  // helmet header (x-frame-options, x-content-type-options, etc.) still applies everywhere.
+  await fastify.register(helmet, { contentSecurityPolicy: false });
+  // App-wide budget for `/v1/*` (and everything else); the Better Auth mount in
+  // `better-auth.handler.ts` layers its own stricter per-route override on top of this instance.
+  await fastify.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute" });
+
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, {
     bufferLogs: true,
   });
 
   app.useLogger(app.get(Logger));
 
-  // Version every feature route under `/v1`; `/health` stays unprefixed for orchestrator/web probes
-  // (docs/API_AND_AUTH_PLAN.md, Phase 0). Set before the OpenAPI doc so Swagger reflects the prefix.
-  app.setGlobalPrefix("v1", {
-    exclude: [{ path: "health", method: RequestMethod.ALL }],
-  });
+  // Set before the OpenAPI doc so Swagger reflects the prefix.
+  applyGlobalPrefix(app);
+
+  // No enableCors(): browser traffic reaches this API same-origin via the Next.js rewrite in
+  // apps/admin/next.config.ts, and Better Auth's `trustedOrigins` (env `WEB_ORIGIN`) covers the
+  // `/api/auth/*` surface. If a non-proxied consumer (mobile app, third party) is ever added, add
+  // `app.enableCors({ origin: [...], credentials: true })` here.
 
   // Echo the correlation id back so clients can trace their request.
   adapter.getInstance().addHook("onRequest", (request, reply, done) => {
@@ -44,20 +61,10 @@ async function bootstrap(): Promise<void> {
     done();
   });
 
-  // Contract-first OpenAPI generated from the registered zod-to-openapi schemas.
-  const openApiConfig = new DocumentBuilder()
-    .setTitle("Moon IT API")
-    .setDescription("Moon IT admin platform API")
-    .setVersion("0.0.0")
-    // The API authenticates via the Better Auth session cookie (issued by `/api/auth/sign-in/email`).
-    // Declaring it here surfaces the scheme in Swagger; `@ApiCookieAuth()` marks protected routes.
-    .addCookieAuth("better-auth.session_token", {
-      type: "apiKey",
-      in: "cookie",
-      name: "better-auth.session_token",
-    })
-    .build();
-  const document = SwaggerModule.createDocument(app, openApiConfig);
+  // Contract-first OpenAPI generated from the registered zod-to-openapi schemas. Shared with
+  // `openapi-export.ts` via `createOpenApiDocument` so the served spec and the exported artifact
+  // can't drift.
+  const document = createOpenApiDocument(app);
   SwaggerModule.setup("docs", app, cleanupOpenApiDoc(document));
 
   app.enableShutdownHooks();
