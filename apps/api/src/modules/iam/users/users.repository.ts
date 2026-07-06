@@ -1,7 +1,7 @@
 // Drizzle access for users (arch-use-repository-pattern). Reads exclude soft-deleted rows. Credentials
 // are never stored here (Better Auth `accounts`, Phase 4). See docs/API_AND_AUTH_PLAN.md, Phase 2.
 
-import { type Database, users } from "@moonit/db";
+import { authSessions, type Database, users } from "@moonit/db";
 import type { NewUser, Paginated, UpdateUser, User } from "@moonit/schema";
 import { Inject, Injectable } from "@nestjs/common";
 import { and, asc, type Column, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
@@ -61,6 +61,21 @@ export class UsersRepository {
       .where(and(eq(users.id, id), notDeleted(users.deletedAt)))
       .returning();
     return row;
+  }
+
+  /** Suspend the user and revoke their existing Better Auth sessions in one transaction. */
+  async deactivate(id: string): Promise<User | undefined> {
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .update(users)
+        .set({ status: "suspended" })
+        .where(and(eq(users.id, id), notDeleted(users.deletedAt)))
+        .returning();
+      if (!user) return undefined;
+
+      await tx.delete(authSessions).where(eq(authSessions.userId, id));
+      return user;
+    });
   }
 
   private orderBy(query: UserListQuery): SQL {

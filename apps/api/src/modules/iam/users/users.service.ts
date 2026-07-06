@@ -43,7 +43,7 @@ export class UsersService {
   }
 
   async deactivate(id: string): Promise<User> {
-    const user = await this.repository.update(id, { status: "suspended" });
+    const user = await this.repository.deactivate(id);
     if (!user) throw new NotFoundError(`User ${id} not found`);
     return user;
   }

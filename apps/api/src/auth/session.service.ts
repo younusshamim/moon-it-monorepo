@@ -5,7 +5,7 @@
 
 import type { IncomingHttpHeaders } from "node:http";
 import type { Auth } from "@moonit/auth";
-import { type Database, roles, userRoles } from "@moonit/db";
+import { type Database, roles, userRoles, users } from "@moonit/db";
 import { Inject, Injectable } from "@nestjs/common";
 import { fromNodeHeaders } from "better-auth/node";
 import { eq } from "drizzle-orm";
@@ -25,6 +25,9 @@ export class SessionService {
     const session = await this.auth.api.getSession({ headers: fromNodeHeaders(headers) });
     if (!session) return null;
 
+    const status = await this.loadStatus(session.user.id);
+    if (status !== "active") return null;
+
     const assignments = await this.loadRoles(session.user.id);
     return {
       id: session.user.id,
@@ -32,6 +35,15 @@ export class SessionService {
       name: session.user.name,
       roles: assignments,
     };
+  }
+
+  private async loadStatus(userId: string): Promise<string | undefined> {
+    const [row] = await this.db
+      .select({ status: users.status })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return row?.status;
   }
 
   private async loadRoles(userId: string): Promise<SessionRole[]> {
