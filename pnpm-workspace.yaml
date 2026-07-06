@@ -2,5 +2,14 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# tooling/* is intentionally NOT a workspace — it holds infra glue
-# (docker, scripts) that nothing imports at runtime. See INFRASTRUCTURE.md §2.
+catalog:
+  zod: 4.4.3
+  typescript: 5.9.2
+  drizzle-orm: ^0.45.2
+  better-auth: ^1.6.23
+  lucide-react: ^0.563.0
+  tailwindcss: ^4.1.18
+  "@tailwindcss/postcss": ^4.1.18
+  "@types/node": ^22.10.0
+  "@types/react": ^19.2.7
+  "@types/react-dom": ^19.2.3

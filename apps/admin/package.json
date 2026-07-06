@@ -4,11 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "start": "next start -p 3001",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -19,8 +18,8 @@
     "@moonit/ui": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-query-devtools": "^5.62.0",
-    "better-auth": "^1.6.23",
-    "lucide-react": "^0.563.0",
+    "better-auth": "catalog:",
+    "lucide-react": "catalog:",
     "next": "^16.0.0",
     "next-themes": "^0.4.6",
     "nuqs": "^2.4.0",
@@ -29,16 +28,16 @@
     "react-hook-form": "^7.80.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
-    "zod": "4.4.3",
+    "zod": "catalog:",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/node": "^22.10.0",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "tailwindcss": "^4.1.18",
-    "typescript": "5.9.2"
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
   }
 }

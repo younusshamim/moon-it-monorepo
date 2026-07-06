@@ -70,7 +70,10 @@
     {
       "includes": ["packages/ui/src/components/**"],
       "linter": {
-        "enabled": false
+        "rules": {
+          "a11y": "off",
+          "style": "off"
+        }
       }
     }
   ],

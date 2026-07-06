@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.34.3",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "build": "turbo run build",
@@ -18,8 +18,6 @@
     "docker:ps": "docker compose -f tooling/docker/docker-compose.yml ps",
     "docker:logs": "docker compose -f tooling/docker/docker-compose.yml logs -f postgres",
     "docker:psql": "docker compose -f tooling/docker/docker-compose.yml exec postgres psql -U postgres -d moonit",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -34,12 +32,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
-    "@changesets/cli": "^2.31.0",
     "@commitlint/cli": "^21.1.0",
     "@commitlint/config-conventional": "^21.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "turbo": "^2.10.0",
-    "typescript": "5.9.2"
+    "typescript": "catalog:"
   }
 }

@@ -5,7 +5,7 @@
   "type": "module",
   "exports": {
     ".": {
-      "development": "./src/index.ts",
+      "moonit-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
@@ -13,14 +13,13 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "4.4.3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@moonit/config-ts": "workspace:*",
-    "typescript": "5.9.2"
+    "typescript": "catalog:"
   }
 }

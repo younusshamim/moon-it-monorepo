@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Library (compiled)",
   "extends": "./base.json",
-  "_comment": "For internal packages compiled to ./dist and consumed by Node apps (e.g. apps/api). Build with `tsc` (emits JS + .d.ts); typecheck with `tsc --noEmit`. package.json exports point `default` at ./dist (prod) and add a `development` condition -> ./src so development builds resolve TypeScript source via Node's `--conditions=development`. No `composite` (it conflicts with `--noEmit` and we order builds via Turborepo ^build, not project references). Each package sets its own `rootDir`/`outDir` (those resolve relative to the file that declares them, so they can't live here). See INFRASTRUCTURE.md §2.",
+  "_comment": "For internal packages compiled to ./dist and consumed by Node apps (e.g. apps/api). Build with `tsc` (emits JS + .d.ts); typecheck with `tsc --noEmit`. package.json exports point `default` at ./dist (prod) and add a private `moonit-source` condition -> ./src so Node dev runtimes resolve TypeScript source via `--conditions=moonit-source` (swc-node/tsx rewrite the NodeNext `.js` specifiers to `.ts`). The condition is intentionally NOT named `development`: Next.js/Turbopack auto-applies `development` in `next dev` and would then pull these `.js`-barrel sources, which Turbopack cannot resolve (no `.js`->`.ts` rewrite, no extensionAlias) — so the admin app must always resolve `default`->dist. No `composite` (it conflicts with `--noEmit` and we order builds via Turborepo ^build, not project references). Each package sets its own `rootDir`/`outDir` (those resolve relative to the file that declares them, so they can't live here).",
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,

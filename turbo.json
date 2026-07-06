@@ -1,35 +1,16 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalDependencies": ["**/.env"],
   "globalEnv": ["NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
-      "env": [
-        "DATABASE_URL",
-        "REDIS_URL",
-        "ANTHROPIC_API_KEY",
-        "BETTER_AUTH_SECRET",
-        "SENTRY_DSN",
-        "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "PORT",
-        "HOST",
-        "LOG_LEVEL",
-        "API_URL",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL"
-      ]
+      "env": ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_APP_URL"]
     },
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "lint": {
-      "dependsOn": ["^build"],
-      "env": []
     },
     "typecheck": {
       "dependsOn": ["^build"],
