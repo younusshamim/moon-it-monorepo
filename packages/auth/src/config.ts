@@ -7,7 +7,6 @@ import type { Database } from "@moonit/db";
 import { authAccounts, authSessions, authVerifications, users } from "@moonit/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { withUserDateShim } from "./user-date-shim.js";
 
 export interface CreateAuthDeps {
   /** The Drizzle client (from `createDbClient`). Injected so tests/apps own their connection. */
@@ -56,7 +55,9 @@ export function createAuth(deps: CreateAuthDeps) {
     ...(deps.baseURL ? { baseURL: deps.baseURL } : {}),
     ...(deps.trustedOrigins ? { trustedOrigins: deps.trustedOrigins } : {}),
     telemetry: { enabled: false },
-    database: drizzleAdapter(withUserDateShim(deps.db), {
+    // Better Auth writes `Date`s to `users`; the shared `isoTimestamp` column type (@moonit/db)
+    // coerces them to ISO strings at the driver boundary, so no client wrapper is needed here.
+    database: drizzleAdapter(deps.db, {
       provider: "pg",
       schema: {
         user: users,

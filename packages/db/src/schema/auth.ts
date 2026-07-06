@@ -13,9 +13,9 @@ import { id } from "./shared.js";
 
 // `mode: "date"` (drizzle's pg default) — unlike the rest of the schema these tables are written and
 // read *only* by Better Auth, which works in JS `Date`s (inserts, and `expiresAt` </> `new Date()`
-// filters). Date mode lets drizzle serialize those directly; the physical column type is unchanged
-// (no migration). The `iam.users` peer stays `mode: "string"` for the wire contract — @moonit/auth
-// coerces Better Auth's `Date`s to ISO strings on user writes (see `withUserDateShim`).
+// filters). Date mode lets drizzle serialize those directly; the physical column type is unchanged.
+// The `iam.users` peer uses the shared `isoTimestamp` custom type (schema/shared.ts), whose
+// `toDriver` accepts `Date`, so Better Auth writes its `Date`s to `users` directly — no shim needed.
 const tstz = () => timestamp({ withTimezone: true });
 
 // Non-soft-deletable infra rows: explicit created/updated (no `deletedAt` from the shared factory).

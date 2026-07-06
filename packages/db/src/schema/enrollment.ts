@@ -1,9 +1,10 @@
 // Domain 7 — Enrollment & Attendance. Peer of @moonit/schema/enrollment.
-import { date, index, pgEnum, pgTable, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { date, index, pgEnum, pgTable, unique, uuid } from "drizzle-orm/pg-core";
 import { students } from "./people.js";
 // `batches` is referenced lazily; imported from scheduling.
 import { batches, sessions } from "./scheduling.js";
-import { audit, id, timestamps } from "./shared.js";
+import { audit, id, isoTimestamp, timestamps } from "./shared.js";
 
 export const enrollmentStatus = pgEnum("enrollment_status", [
   "applied",
@@ -56,7 +57,7 @@ export const attendance = pgTable(
       .references(() => enrollments.id)
       .notNull(),
     status: attendanceStatus().default("present").notNull(),
-    markedAt: timestamp({ withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    markedAt: isoTimestamp().default(sql`now()`).notNull(),
     markedBy: uuid(),
   },
   (t) => [

@@ -6,9 +6,10 @@
 // Wire-representation decisions (confirmed):
 //   - Postgres `numeric(p,s)` (money, fees, marks, rates) → decimal **string** — matches Drizzle's
 //     default numeric mode and avoids float drift. Use `numericString()`.
-//   - `date` / `timestamp(tz)` / `time` → **ISO strings**, so packages/db sets Drizzle string mode
-//     on these columns. Keeps wire schemas plain JSON: a schema's input and output JSON Schema
-//     coincide (no `.transform()` / coercion), per §4.
+//   - `date` / `timestamp(tz)` / `time` → **ISO strings**. `timestamptz` is normalized to canonical
+//     RFC-3339 by packages/db's `isoTimestamp` custom type; `date`/`time` use Drizzle string mode.
+//     Keeps wire schemas plain JSON: a schema's input and output JSON Schema coincide (no
+//     `.transform()` / coercion), per §4.
 import { z } from "zod";
 
 /** Primary key — `uuid` with DB-side `defaultRandom()`. */
@@ -31,20 +32,12 @@ export const isoDate = () => z.iso.date();
 /**
  * ISO timestamp with timezone offset (Postgres `timestamptz`).
  *
- * Postgres returns `timestamptz` in Drizzle `mode:"string"` as its text form (e.g.
- * `2026-07-04 06:43:44+00` — space separator, `+00` offset), which is *not* RFC 3339 and would fail
- * `z.iso.datetime`. We normalize any parseable timestamp string to canonical ISO-8601 (`…T…Z`) before
- * validating, so entity responses serialize cleanly while the wire type stays a plain string.
+ * The DB layer's `isoTimestamp` custom type (@moonit/db `schema/shared.ts`) normalizes Postgres'
+ * text form to canonical RFC-3339 at the driver boundary, so the wire value is already valid ISO
+ * here — no `z.preprocess` needed. This keeps the invariant that a wire schema's input and output
+ * JSON Schema coincide (no `.transform()` / coercion).
  */
-export const isoDateTime = () =>
-  z.preprocess(
-    (value) => {
-      if (typeof value !== "string") return value;
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? value : date.toISOString();
-    },
-    z.iso.datetime({ offset: true }),
-  );
+export const isoDateTime = () => z.iso.datetime({ offset: true });
 
 /** ISO wall-clock time, `HH:MM:SS` (Postgres `time`). */
 export const isoTime = () => z.iso.time();

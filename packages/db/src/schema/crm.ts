@@ -1,9 +1,10 @@
 // Domain 10 — Admissions / CRM: leads and lead activity. Peer of @moonit/schema/crm.
-import { index, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { index, pgEnum, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { courses } from "./catalog.js";
 import { branches } from "./organization.js";
 import { students } from "./people.js";
-import { audit, id, timestamps } from "./shared.js";
+import { audit, id, isoTimestamp, timestamps } from "./shared.js";
 
 export const leadStatus = pgEnum("lead_status", [
   "new",
@@ -57,7 +58,7 @@ export const leadActivities = pgTable(
       .notNull(),
     type: varchar({ length: 40 }).notNull(), // "call", "visit", "follow_up"
     note: text(),
-    activityAt: timestamp({ withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    activityAt: isoTimestamp().default(sql`now()`).notNull(),
     by: uuid(),
   },
   (t) => [index().on(t.leadId)],
