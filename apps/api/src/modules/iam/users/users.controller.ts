@@ -7,7 +7,9 @@ import { ApiTags } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
 import { Authz } from "../../../auth/authz.decorator.js";
 import type { AuthzContext } from "../../../auth/authz-context.js";
+import { CurrentUser } from "../../../auth/current-user.decorator.js";
 import { RequirePermissions } from "../../../auth/require-permissions.decorator.js";
+import type { SessionUser } from "../../../auth/session-user.js";
 import {
   CreateUserDto,
   UpdateUserDto,
@@ -44,22 +46,29 @@ export class UsersController {
   @Post()
   @RequirePermissions(PERMISSIONS.USER_MANAGE)
   @ZodSerializerDto(UserDto)
-  create(@Body() body: CreateUserDto): Promise<User> {
-    return this.service.create(body);
+  create(@Body() body: CreateUserDto, @CurrentUser() user: SessionUser): Promise<User> {
+    return this.service.create(body, user.id);
   }
 
   @Patch(":id")
   @RequirePermissions(PERMISSIONS.USER_MANAGE)
   @ZodSerializerDto(UserDto)
-  update(@Param("id", ParseUUIDPipe) id: string, @Body() body: UpdateUserDto): Promise<User> {
-    return this.service.update(id, body);
+  update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: UpdateUserDto,
+    @CurrentUser() user: SessionUser,
+  ): Promise<User> {
+    return this.service.update(id, body, user.id);
   }
 
   @Post(":id/deactivate")
   @RequirePermissions(PERMISSIONS.USER_MANAGE)
   @ZodSerializerDto(UserDto)
-  deactivate(@Param("id", ParseUUIDPipe) id: string): Promise<User> {
-    return this.service.deactivate(id);
+  deactivate(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: SessionUser,
+  ): Promise<User> {
+    return this.service.deactivate(id, user.id);
   }
 
   @Get(":id/roles")

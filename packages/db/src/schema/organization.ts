@@ -37,6 +37,7 @@ export const rooms = pgTable(
     hasComputers: boolean().default(false).notNull(),
     isActive: boolean().default(true).notNull(),
     ...timestamps(),
+    ...audit(),
   },
   (t) => [index().on(t.branchId), index().on(t.createdAt)],
 );
@@ -48,6 +49,7 @@ export const departments = pgTable(
     branchId: uuid().references(() => branches.id), // null = institute-wide
     name: varchar({ length: 120 }).notNull(), // "IT", "Languages", "Diploma"
     ...timestamps(),
+    ...audit(),
   },
   (t) => [index().on(t.branchId), index().on(t.createdAt)],
 );

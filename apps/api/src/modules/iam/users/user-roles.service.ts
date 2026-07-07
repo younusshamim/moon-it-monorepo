@@ -1,15 +1,13 @@
 // Branch-scoped role-assignment logic. A duplicate (userId, roleId, branchId) maps to ConflictError;
 // an unknown role/branch (FK violation) maps to ValidationError; unassigning a missing row is a 404.
 // See docs/API_AND_AUTH_PLAN.md, Phase 2.
-import { ConflictError, NotFoundError, ValidationError } from "@moonit/core";
+import { NotFoundError } from "@moonit/core";
 import { PERMISSIONS, type UserRole } from "@moonit/schema";
 import { Injectable } from "@nestjs/common";
 import type { AuthzContext } from "../../../auth/authz-context.js";
+import { mapPgError } from "../../../common/db/pg-error.js";
 import { UserRolesRepository } from "./user-roles.repository.js";
 import { UsersService } from "./users.service.js";
-
-const UNIQUE_VIOLATION = "23505";
-const FK_VIOLATION = "23503";
 
 @Injectable()
 export class UserRolesService {
@@ -39,15 +37,10 @@ export class UserRolesService {
         branchId: input.branchId ?? null,
       });
     } catch (error) {
-      if (isPgError(error)) {
-        if (error.code === UNIQUE_VIOLATION) {
-          throw new ConflictError("That role is already assigned for this branch");
-        }
-        if (error.code === FK_VIOLATION) {
-          throw new ValidationError("Unknown role or branch");
-        }
-      }
-      throw error;
+      throw mapPgError(error, {
+        conflict: "That role is already assigned for this branch",
+        foreignKey: "Unknown role or branch",
+      });
     }
   }
 
@@ -55,8 +48,4 @@ export class UserRolesService {
     const deletedId = await this.repository.delete(id);
     if (!deletedId) throw new NotFoundError(`Assignment ${id} not found`);
   }
-}
-
-function isPgError(error: unknown): error is { code: string } {
-  return typeof error === "object" && error !== null && "code" in error;
 }

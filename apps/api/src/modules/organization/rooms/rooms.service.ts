@@ -29,16 +29,16 @@ export class RoomsService {
     return room;
   }
 
-  async create(input: NewRoom, authz: AuthzContext): Promise<Room> {
+  async create(input: NewRoom, authz: AuthzContext, actorId: string): Promise<Room> {
     authz.assertBranch(PERMISSIONS.ROOM_MANAGE, input.branchId);
     try {
-      return await this.repository.create(input);
+      return await this.repository.create(input, actorId);
     } catch (error) {
       throw mapPgError(error, { conflict: "Room already exists" });
     }
   }
 
-  async update(id: string, input: UpdateRoom, authz: AuthzContext): Promise<Room> {
+  async update(id: string, input: UpdateRoom, authz: AuthzContext, actorId: string): Promise<Room> {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundError(`Room ${id} not found`);
     authz.assertBranch(PERMISSIONS.ROOM_MANAGE, existing.branchId);
@@ -49,7 +49,7 @@ export class RoomsService {
 
     let room: Room | undefined;
     try {
-      room = await this.repository.update(id, input);
+      room = await this.repository.update(id, input, actorId);
     } catch (error) {
       throw mapPgError(error, { conflict: "Room already exists" });
     }
@@ -57,12 +57,12 @@ export class RoomsService {
     return room;
   }
 
-  async remove(id: string, authz: AuthzContext): Promise<void> {
+  async remove(id: string, authz: AuthzContext, actorId: string): Promise<void> {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundError(`Room ${id} not found`);
     authz.assertBranch(PERMISSIONS.ROOM_MANAGE, existing.branchId);
 
-    const deletedId = await this.repository.softDelete(id);
+    const deletedId = await this.repository.softDelete(id, actorId);
     if (!deletedId) throw new NotFoundError(`Room ${id} not found`);
   }
 }

@@ -1,14 +1,11 @@
 // Role domain logic. System roles (`isSystem`) are read-only: update/delete throw ForbiddenError (403),
 // protecting the seeded RBAC baseline. Duplicate keys map to ConflictError. Permission-set replacement
 // is allowed for any existing role (only the role row itself is protected). See Phase 2.
-import { ForbiddenError, NotFoundError, ValidationError } from "@moonit/core";
+import { ForbiddenError, NotFoundError } from "@moonit/core";
 import type { NewRole, Permission, Role, UpdateRole } from "@moonit/schema";
 import { Injectable } from "@nestjs/common";
 import { mapPgError } from "../../../common/db/pg-error.js";
 import { RolesRepository } from "./roles.repository.js";
-
-// Postgres foreign_key_violation — an unknown permission id in a grant set.
-const FK_VIOLATION = "23503";
 
 @Injectable()
 export class RolesService {
@@ -61,14 +58,7 @@ export class RolesService {
     try {
       return await this.repository.replacePermissions(roleId, permissionIds);
     } catch (error) {
-      if (isPgError(error) && error.code === FK_VIOLATION) {
-        throw new ValidationError("One or more permission ids do not exist");
-      }
-      throw error;
+      throw mapPgError(error, { foreignKey: "One or more permission ids do not exist" });
     }
   }
-}
-
-function isPgError(error: unknown): error is { code: string } {
-  return typeof error === "object" && error !== null && "code" in error;
 }

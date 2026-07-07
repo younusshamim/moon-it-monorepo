@@ -49,26 +49,29 @@ export class UsersRepository {
     return row;
   }
 
-  async create(input: NewUser): Promise<User> {
-    const [row] = await this.db.insert(users).values(input).returning();
+  async create(input: NewUser, actorId: string): Promise<User> {
+    const [row] = await this.db
+      .insert(users)
+      .values({ ...input, createdBy: actorId, updatedBy: actorId })
+      .returning();
     return row as User;
   }
 
-  async update(id: string, input: UpdateUser): Promise<User | undefined> {
+  async update(id: string, input: UpdateUser, actorId: string): Promise<User | undefined> {
     const [row] = await this.db
       .update(users)
-      .set(input)
+      .set({ ...input, updatedBy: actorId })
       .where(and(eq(users.id, id), notDeleted(users.deletedAt)))
       .returning();
     return row;
   }
 
   /** Suspend the user and revoke their existing Better Auth sessions in one transaction. */
-  async deactivate(id: string): Promise<User | undefined> {
+  async deactivate(id: string, actorId: string): Promise<User | undefined> {
     return this.db.transaction(async (tx) => {
       const [user] = await tx
         .update(users)
-        .set({ status: "suspended" })
+        .set({ status: "suspended", updatedBy: actorId })
         .where(and(eq(users.id, id), notDeleted(users.deletedAt)))
         .returning();
       if (!user) return undefined;

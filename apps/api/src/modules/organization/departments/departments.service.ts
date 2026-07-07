@@ -29,16 +29,21 @@ export class DepartmentsService {
     return department;
   }
 
-  async create(input: NewDepartment, authz: AuthzContext): Promise<Department> {
+  async create(input: NewDepartment, authz: AuthzContext, actorId: string): Promise<Department> {
     authz.assertBranch(PERMISSIONS.DEPARTMENT_MANAGE, input.branchId ?? null);
     try {
-      return await this.repository.create(input);
+      return await this.repository.create(input, actorId);
     } catch (error) {
       throw mapPgError(error, { conflict: "Department already exists" });
     }
   }
 
-  async update(id: string, input: UpdateDepartment, authz: AuthzContext): Promise<Department> {
+  async update(
+    id: string,
+    input: UpdateDepartment,
+    authz: AuthzContext,
+    actorId: string,
+  ): Promise<Department> {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundError(`Department ${id} not found`);
     authz.assertBranch(PERMISSIONS.DEPARTMENT_MANAGE, existing.branchId);
@@ -49,7 +54,7 @@ export class DepartmentsService {
 
     let department: Department | undefined;
     try {
-      department = await this.repository.update(id, input);
+      department = await this.repository.update(id, input, actorId);
     } catch (error) {
       throw mapPgError(error, { conflict: "Department already exists" });
     }
@@ -57,12 +62,12 @@ export class DepartmentsService {
     return department;
   }
 
-  async remove(id: string, authz: AuthzContext): Promise<void> {
+  async remove(id: string, authz: AuthzContext, actorId: string): Promise<void> {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundError(`Department ${id} not found`);
     authz.assertBranch(PERMISSIONS.DEPARTMENT_MANAGE, existing.branchId);
 
-    const deletedId = await this.repository.softDelete(id);
+    const deletedId = await this.repository.softDelete(id, actorId);
     if (!deletedId) throw new NotFoundError(`Department ${id} not found`);
   }
 }

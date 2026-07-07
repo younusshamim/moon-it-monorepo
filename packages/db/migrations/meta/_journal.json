@@ -50,6 +50,13 @@
       "when": 1783341907673,
       "tag": "0006_steep_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783364316821,
+      "tag": "0007_real_scourge",
+      "breakpoints": true
     }
   ]
 }

@@ -40,7 +40,7 @@ const roomFields = {
   isActive: z.boolean(), // default true
 };
 
-export const RoomSchema = z.object({ id, ...roomFields, ...timestamps });
+export const RoomSchema = z.object({ id, ...roomFields, ...timestamps, ...audit });
 export const NewRoomSchema = z.object(roomFields).partial({
   hasComputers: true,
   isActive: true,
@@ -57,7 +57,7 @@ const departmentFields = {
   name: z.string().max(120), // "IT", "Languages", "Diploma"
 };
 
-export const DepartmentSchema = z.object({ id, ...departmentFields, ...timestamps });
+export const DepartmentSchema = z.object({ id, ...departmentFields, ...timestamps, ...audit });
 export const NewDepartmentSchema = z.object(departmentFields).partial({ branchId: true });
 export const UpdateDepartmentSchema = NewDepartmentSchema.partial();
 

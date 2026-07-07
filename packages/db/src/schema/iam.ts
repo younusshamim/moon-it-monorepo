@@ -12,7 +12,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { branches } from "./organization.js";
-import { id, timestamps } from "./shared.js";
+import { audit, id, timestamps } from "./shared.js";
 
 export const userStatus = pgEnum("user_status", ["active", "suspended", "invited"]);
 
@@ -30,6 +30,7 @@ export const users = pgTable(
     emailVerified: boolean().default(false).notNull(),
     image: varchar({ length: 255 }),
     ...timestamps(),
+    ...audit(),
   },
   (t) => [
     // Soft-deleted users must not permanently block their email/phone from re-registration.

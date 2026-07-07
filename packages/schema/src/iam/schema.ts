@@ -1,7 +1,7 @@
 // Domain 1 — Identity & Access (RBAC): users, roles, permissions, branch-scoped assignment.
 // See DATABASE_DOMAIN.md §2. `userRole.branchId` is the multi-branch lever (null = all branches).
 import { z } from "zod";
-import { id, timestamps } from "../shared/columns.js";
+import { audit, id, timestamps } from "../shared/columns.js";
 
 export const UserStatusSchema = z.enum(["active", "suspended", "invited"]);
 export type UserStatus = z.infer<typeof UserStatusSchema>;
@@ -19,7 +19,7 @@ const userFields = {
   image: z.string().max(255).nullable(),
 };
 
-export const UserSchema = z.object({ id, ...userFields, ...timestamps });
+export const UserSchema = z.object({ id, ...userFields, ...timestamps, ...audit });
 export const NewUserSchema = z.object(userFields).partial({
   phone: true,
   status: true,

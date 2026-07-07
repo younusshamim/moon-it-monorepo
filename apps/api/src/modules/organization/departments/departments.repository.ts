@@ -44,24 +44,32 @@ export class DepartmentsRepository {
     return row;
   }
 
-  async create(input: NewDepartment): Promise<Department> {
-    const [row] = await this.db.insert(departments).values(input).returning();
+  async create(input: NewDepartment, actorId: string): Promise<Department> {
+    const [row] = await this.db
+      .insert(departments)
+      .values({ ...input, createdBy: actorId, updatedBy: actorId })
+      .returning();
     return row as Department;
   }
 
-  async update(id: string, input: UpdateDepartment): Promise<Department | undefined> {
+  async update(
+    id: string,
+    input: UpdateDepartment,
+    actorId: string,
+  ): Promise<Department | undefined> {
     const [row] = await this.db
       .update(departments)
-      .set(input)
+      .set({ ...input, updatedBy: actorId })
       .where(and(eq(departments.id, id), notDeleted(departments.deletedAt)))
       .returning();
     return row;
   }
 
-  async softDelete(id: string): Promise<string | undefined> {
+  /** Soft-delete: stamp `deletedAt` + the actor. Returns the id when a live row matched, else undefined. */
+  async softDelete(id: string, actorId: string): Promise<string | undefined> {
     const [row] = await this.db
       .update(departments)
-      .set({ deletedAt: new Date().toISOString() })
+      .set({ deletedAt: new Date().toISOString(), updatedBy: actorId })
       .where(and(eq(departments.id, id), notDeleted(departments.deletedAt)))
       .returning({ id: departments.id });
     return row?.id;

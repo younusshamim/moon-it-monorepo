@@ -44,24 +44,28 @@ export class RoomsRepository {
     return row;
   }
 
-  async create(input: NewRoom): Promise<Room> {
-    const [row] = await this.db.insert(rooms).values(input).returning();
+  async create(input: NewRoom, actorId: string): Promise<Room> {
+    const [row] = await this.db
+      .insert(rooms)
+      .values({ ...input, createdBy: actorId, updatedBy: actorId })
+      .returning();
     return row as Room;
   }
 
-  async update(id: string, input: UpdateRoom): Promise<Room | undefined> {
+  async update(id: string, input: UpdateRoom, actorId: string): Promise<Room | undefined> {
     const [row] = await this.db
       .update(rooms)
-      .set(input)
+      .set({ ...input, updatedBy: actorId })
       .where(and(eq(rooms.id, id), notDeleted(rooms.deletedAt)))
       .returning();
     return row;
   }
 
-  async softDelete(id: string): Promise<string | undefined> {
+  /** Soft-delete: stamp `deletedAt` + the actor. Returns the id when a live row matched, else undefined. */
+  async softDelete(id: string, actorId: string): Promise<string | undefined> {
     const [row] = await this.db
       .update(rooms)
-      .set({ deletedAt: new Date().toISOString() })
+      .set({ deletedAt: new Date().toISOString(), updatedBy: actorId })
       .where(and(eq(rooms.id, id), notDeleted(rooms.deletedAt)))
       .returning({ id: rooms.id });
     return row?.id;

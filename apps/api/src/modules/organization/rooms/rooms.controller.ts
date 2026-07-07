@@ -17,7 +17,9 @@ import { ApiTags } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
 import { Authz } from "../../../auth/authz.decorator.js";
 import type { AuthzContext } from "../../../auth/authz-context.js";
+import { CurrentUser } from "../../../auth/current-user.decorator.js";
 import { RequirePermissions } from "../../../auth/require-permissions.decorator.js";
+import type { SessionUser } from "../../../auth/session-user.js";
 import {
   CreateRoomDto,
   RoomDto,
@@ -49,8 +51,12 @@ export class RoomsController {
   @Post()
   @RequirePermissions(PERMISSIONS.ROOM_MANAGE)
   @ZodSerializerDto(RoomDto)
-  create(@Body() body: CreateRoomDto, @Authz() authz: AuthzContext): Promise<Room> {
-    return this.service.create(body, authz);
+  create(
+    @Body() body: CreateRoomDto,
+    @Authz() authz: AuthzContext,
+    @CurrentUser() user: SessionUser,
+  ): Promise<Room> {
+    return this.service.create(body, authz, user.id);
   }
 
   @Patch(":id")
@@ -60,14 +66,19 @@ export class RoomsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() body: UpdateRoomDto,
     @Authz() authz: AuthzContext,
+    @CurrentUser() user: SessionUser,
   ): Promise<Room> {
-    return this.service.update(id, body, authz);
+    return this.service.update(id, body, authz, user.id);
   }
 
   @Delete(":id")
   @RequirePermissions(PERMISSIONS.ROOM_MANAGE)
   @HttpCode(204)
-  remove(@Param("id", ParseUUIDPipe) id: string, @Authz() authz: AuthzContext): Promise<void> {
-    return this.service.remove(id, authz);
+  remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Authz() authz: AuthzContext,
+    @CurrentUser() user: SessionUser,
+  ): Promise<void> {
+    return this.service.remove(id, authz, user.id);
   }
 }

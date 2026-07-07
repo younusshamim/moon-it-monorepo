@@ -22,19 +22,19 @@ export class UsersService {
     return user;
   }
 
-  async create(input: NewUser): Promise<User> {
+  async create(input: NewUser, actorId: string): Promise<User> {
     try {
       // A freshly provisioned user has no credential yet — it starts as `invited` regardless of input.
-      return await this.repository.create({ ...input, status: "invited" });
+      return await this.repository.create({ ...input, status: "invited" }, actorId);
     } catch (error) {
       throw mapPgError(error, { conflict: "A user with that email or phone already exists" });
     }
   }
 
-  async update(id: string, input: UpdateUser): Promise<User> {
+  async update(id: string, input: UpdateUser, actorId: string): Promise<User> {
     let user: User | undefined;
     try {
-      user = await this.repository.update(id, input);
+      user = await this.repository.update(id, input, actorId);
     } catch (error) {
       throw mapPgError(error, { conflict: "A user with that email or phone already exists" });
     }
@@ -42,8 +42,8 @@ export class UsersService {
     return user;
   }
 
-  async deactivate(id: string): Promise<User> {
-    const user = await this.repository.deactivate(id);
+  async deactivate(id: string, actorId: string): Promise<User> {
+    const user = await this.repository.deactivate(id, actorId);
     if (!user) throw new NotFoundError(`User ${id} not found`);
     return user;
   }
